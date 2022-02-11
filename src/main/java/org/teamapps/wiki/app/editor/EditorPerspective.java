@@ -1,6 +1,5 @@
 package org.teamapps.wiki.app.editor;
 
-import org.jetbrains.annotations.NotNull;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
 import org.teamapps.application.server.system.session.PerspectiveSessionData;
@@ -36,7 +35,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Book> selectedBook = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
-    private final TwoWayBindableValue<Boolean> editingMode = TwoWayBindableValue.create(Boolean.FALSE);
+    private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
+    private RichTextEditor contentEditor;
 
     public EditorPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
         super(applicationInstanceData, perspectiveInfoBadgeValue);
@@ -52,14 +52,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         navigationView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
         contentView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
+        contentView.getPanel().setPadding(10);
 
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
-        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes")).onClick.addListener(() -> {
-            editingMode.set(Boolean.FALSE);
+        ToolbarButton saveButton = ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes");
+        saveButton.setVisible(false);
+        buttonGroup.addButton(saveButton).onClick.addListener(() -> {
+            editingModeEnabled.set(Boolean.FALSE);
+            selectedPage.get().setContent(contentEditor.getValue());
             selectedPage.get().save();
+            updateContentView(selectedPage.get());
         });
         buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRITING_HAND, "Edit")).onClick.addListener(() -> {
-            editingMode.set(Boolean.TRUE);
+            editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
         });
 
         selectedBook.set(Book.getAll().stream().findFirst().orElse(Book.create().setTitle("New Book")));
@@ -70,7 +75,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             contentView.getPanel().setTitle(page.getTitle());
             contentView.focus();
         });
-        editingMode.onChanged().addListener(() -> updateContentView(selectedPage.get()));
+        editingModeEnabled.onChanged().addListener(enabled -> {
+            saveButton.setVisible(enabled);
+            updateContentView(selectedPage.get());
+        });
 
         navigationView.setComponent(createNavigationView());
     }
@@ -91,7 +99,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         descriptionField.setShowHtml(true);
         contentVerticalLayout.addComponent(descriptionField);
 
-        if (editingMode.get()){
+        if (editingModeEnabled.get()){
+            contentEditor = new RichTextEditor();
+            contentEditor.setValue(page.getContent());
+            contentEditor.setEditingMode(FieldEditingMode.EDITABLE_IF_FOCUSED);
+            contentVerticalLayout.addComponent(contentEditor);
+
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
                     case RICH_TEXT -> {
@@ -104,6 +117,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 }
             });
         } else {
+
+            DisplayField contentDisplay = new DisplayField();
+            contentDisplay.setValue(page.getContent());
+            contentDisplay.setShowHtml(true);
+            contentVerticalLayout.addComponent(contentDisplay);
+
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
                     case RICH_TEXT -> {
@@ -176,24 +195,28 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
         selectedChapter.bindWritingTo(chapter -> {
             chapterComboBox.setValue(chapter);
+            selectedPage.set(chapter.getPages().stream().findFirst().orElse(createNewPage(selectedChapter.get())));
             pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
 
 
         ToolbarButtonGroup buttonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.PLUS, "New Page")).onClick.addListener(() -> {
-            Page parent = null; // selectedPage.get();
-            Page.create()
-                    .setParent(parent)
-                    .setTitle("New Page")
-                    .setDescription("")
-                    .setChapter(selectedChapter.get())
-                    .setContentBlocks(ContentBlock.create().setContentBlockType(ContentBlockType.RICH_TEXT).setValue("<h2>Title</h2><p>Text</p>"))
-                    .save();
+            createNewPage(selectedChapter.get());
             pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
 
         return navigationLayout;
+    }
+
+    private Page createNewPage(Chapter chapter) {
+        return Page.create()
+                .setParent(null)
+                .setTitle("New Page")
+                .setDescription("")
+                .setChapter(chapter)
+                .setContentBlocks(ContentBlock.create().setContentBlockType(ContentBlockType.RICH_TEXT).setValue("<h2>Title</h2><p>Text</p>"))
+                .save();
     }
 
 }

@@ -31,6 +31,7 @@ public class Model implements SchemaInfoProvider {
                 .addText("title")
                 .addText("linkTitle")
                 .addText("description")
+                .addText("content")
                 .addReference("parent", page, false, "children")
                 .addReference("children", page, true, "parent")
                 .addReference("chapter", chapter, false, "pages")
