@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.teamapps</groupId>
+    <artifactId>wiki</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>15</maven.compiler.source>
+        <maven.compiler.target>15</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.teamapps</groupId>
+            <artifactId>teamapps-application-server</artifactId>
+            <version>0.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.teamapps</groupId>
+            <artifactId>teamapps-emoji-icon-provider</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+<!--
+        <dependency>
+            <groupId>org.teamapps</groupId>
+            <artifactId>teamapps-icons</artifactId>
+            <version>1.3</version>
+        </dependency>
+        -->
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.teamapps</groupId>
+                <artifactId>universal-db-maven-plugin</artifactId>
+                <version>1.2</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-model</goal>
+                        </goals>
+                        <configuration>
+                            <modelSourceDirectory>${project.basedir}/src/main/model</modelSourceDirectory>
+                            <modelClasses>
+                                <modelClass>Model</modelClass>
+                            </modelClasses>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
