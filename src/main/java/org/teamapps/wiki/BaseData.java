@@ -13,6 +13,10 @@ public class BaseData {
 
     public static void createBaseData() {
 
+        Page.getAll().forEach(page -> {
+            if (page.getParent() != null && page.getParent().equals(page)){ page.setParent(null).save(); }
+        });
+
         if (Book.getCount() > 0) {
             return;
         }

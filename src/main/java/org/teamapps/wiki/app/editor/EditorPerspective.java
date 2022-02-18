@@ -3,6 +3,7 @@ package org.teamapps.wiki.app.editor;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
 import org.teamapps.application.server.system.session.PerspectiveSessionData;
+import org.teamapps.application.ux.form.FormWindow;
 import org.teamapps.common.format.Color;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.databinding.TwoWayBindableValue;
@@ -10,9 +11,9 @@ import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.application.view.View;
-import org.teamapps.ux.component.Component;
 import org.teamapps.ux.component.field.DisplayField;
 import org.teamapps.ux.component.field.FieldEditingMode;
+import org.teamapps.ux.component.field.TextField;
 import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.field.richtext.RichTextEditor;
 import org.teamapps.ux.component.flexcontainer.VerticalLayout;
@@ -54,6 +55,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         contentView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
         contentView.getPanel().setPadding(10);
 
+        ToolbarButtonGroup navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
+        navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.PLUS, "New Page")).onClick.addListener(() -> {
+            createNewPage(selectedChapter.get());
+            // pageTreeModel.setRecords(selectedChapter.get().getPages());
+            updateNavigationView();
+        });
+
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton saveButton = ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes");
         saveButton.setVisible(false);
@@ -66,23 +74,107 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRITING_HAND, "Edit")).onClick.addListener(() -> {
             editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
         });
+        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.GEAR, "Page Settings")).onClick.addListener(() -> {
+            showPageSettingsWindow(selectedPage.get());
+        });
 
         selectedBook.set(Book.getAll().stream().findFirst().orElse(Book.create().setTitle("New Book")));
-        selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(Chapter.create().setBook(selectedBook.get()).setTitle("Chapter 1")));
+        selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null)); // Chapter.create().setBook(selectedBook.get()).setTitle("Chapter 1")
 
         selectedPage.onChanged().addListener(page -> {
-            updateContentView(selectedPage.get());
-            contentView.getPanel().setTitle(page.getTitle());
-            contentView.focus();
+            if (selectedPage.get() != null ) {
+                updateContentView(selectedPage.get());
+                contentView.getPanel().setTitle(page.getTitle());
+                contentView.focus();
+            } else {
+                updateNavigationView();
+            }
         });
         editingModeEnabled.onChanged().addListener(enabled -> {
             saveButton.setVisible(enabled);
             updateContentView(selectedPage.get());
         });
-
-        navigationView.setComponent(createNavigationView());
+        updateNavigationView();
     }
 
+    private void showPageSettingsWindow(Page page) {
+
+        FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
+        ToolbarButton saveButton = formWindow.addSaveButton();
+        formWindow.addCancelButton();
+
+        TextField pageTitleField = new TextField();
+        TextField pageDescriptionField = new TextField();
+
+        pageTitleField.setValue(page.getTitle());
+        pageDescriptionField.setValue(page.getDescription());
+
+//        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
+//        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
+//        chapterComboBox.setModel(chapterListTreeModel);
+//        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+//        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
+//            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
+//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
+//            return map;
+//        });
+//        chapterComboBox.setValue(page.getChapter());
+//        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+
+        ComboBox<Page> pageComboBox = new ComboBox<>();
+        ListTreeModel<Page> pageListModel = new ListTreeModel<>(page.getChapter().getPages());
+        pageComboBox.setModel(pageListModel);
+        pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+        pageComboBox.setPropertyProvider((p, propertyNames) -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.PAGE_FACING_UP);
+            map.put(BaseTemplate.PROPERTY_CAPTION, p.getTitle());
+            map.put(BaseTemplate.PROPERTY_DESCRIPTION, p.getDescription());
+            return map;
+        });
+        pageComboBox.setShowClearButton(true);
+        pageComboBox.setValue(page.getParent());
+        pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), WikiUtils.getPageLevel(p) == 0, true, false));
+        pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+
+        formWindow.addSection();
+        formWindow.addField("Page Title", pageTitleField);
+        formWindow.addField("Page Description", pageDescriptionField);
+        formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
+        formWindow.addField("Parent Page", pageComboBox);
+
+        // formWindow.addSection(EmojiIcon.WARNING, "Danger Zone");
+        ToolbarButton deletePageButton = ToolbarButton.create(EmojiIcon.CROSS_MARK, "Delete Page", null);
+        deletePageButton.onClick.addListener(() -> {
+            // Todo ConfirmationDialog
+            page.delete();
+            selectedPage.set(null);
+            formWindow.close();
+        });
+        formWindow.addButtonGroup().addButton(deletePageButton);
+        formWindow.show();
+
+        saveButton.onClick.addListener(() -> {
+            page.setTitle(pageTitleField.getValue());
+            page.setDescription(pageDescriptionField.getValue());
+
+            Page newParent = pageComboBox.getValue();
+            if (newParent.equals(page)) { newParent = null; }
+            page.setParent(newParent);
+            page.save();
+            updateContentView();
+            updateNavigationView();
+            selectedPage.set(page); // update views
+            formWindow.close();
+        });
+
+    }
+
+    private void updateContentView(){
+        updateContentView(selectedPage.get());
+    }
     private void updateContentView(Page page) {
         VerticalLayout contentVerticalLayout = new VerticalLayout();
 
@@ -95,14 +187,18 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         contentVerticalLayout.addComponent(titleField);
 
         DisplayField descriptionField = new DisplayField();
-        descriptionField.setValue("<p>" + page.getDescription() + "</p>");
-        descriptionField.setShowHtml(true);
-        contentVerticalLayout.addComponent(descriptionField);
+
+        String description = page.getDescription();
+        if (description != null ) {
+            descriptionField.setValue("<p>" + description + "</p>");
+            descriptionField.setShowHtml(true);
+            contentVerticalLayout.addComponent(descriptionField);
+        }
 
         if (editingModeEnabled.get()){
             contentEditor = new RichTextEditor();
             contentEditor.setValue(page.getContent());
-            contentEditor.setEditingMode(FieldEditingMode.EDITABLE_IF_FOCUSED);
+            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
             contentVerticalLayout.addComponent(contentEditor);
 
             page.getContentBlocks().forEach(contentBlock -> {
@@ -110,7 +206,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                     case RICH_TEXT -> {
                         RichTextEditor richTextEditor = new RichTextEditor();
                         richTextEditor.setValue(contentBlock.getValue());
-                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE_IF_FOCUSED);
+                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
                         richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
                         contentVerticalLayout.addComponent(richTextEditor);
                     }
@@ -139,7 +235,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         contentView.setComponent(contentVerticalLayout);
     }
 
-    private Component createNavigationView() {
+    private void updateNavigationView() {
         VerticalLayout navigationLayout = new VerticalLayout();
         ComboBox<Book> bookComboBox = new ComboBox<>();
         bookComboBox.setModel(new ListTreeModel<Book>(Book.getAll()));
@@ -184,39 +280,33 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             return map;
         });
 
-        pageTree.onNodeSelected.addListener(page -> {
-            selectedPage.set(page);
-        });
+        pageTree.onNodeSelected.addListener(selectedPage::set);
         navigationLayout.addComponent(pageTree);
 
         selectedBook.bindWritingTo(book -> {
             chapterListTreeModel.setRecords(book.getChapters());
-            selectedChapter.set(book.getChapters().stream().findFirst().orElse(Chapter.create().setTitle("new Chapter")));
+            selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
         });
         selectedChapter.bindWritingTo(chapter -> {
             chapterComboBox.setValue(chapter);
-            selectedPage.set(chapter.getPages().stream().findFirst().orElse(createNewPage(selectedChapter.get())));
+            selectedPage.set(chapter.getPages().stream().findFirst().orElse(null));
             pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
 
-
-        ToolbarButtonGroup buttonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
-        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.PLUS, "New Page")).onClick.addListener(() -> {
-            createNewPage(selectedChapter.get());
-            pageTreeModel.setRecords(selectedChapter.get().getPages());
-        });
-
-        return navigationLayout;
+        navigationView.setComponent(navigationLayout);
     }
 
     private Page createNewPage(Chapter chapter) {
-        return Page.create()
+        Page new_page = Page.create()
                 .setParent(null)
                 .setTitle("New Page")
                 .setDescription("")
                 .setChapter(chapter)
                 .setContentBlocks(ContentBlock.create().setContentBlockType(ContentBlockType.RICH_TEXT).setValue("<h2>Title</h2><p>Text</p>"))
                 .save();
+        showPageSettingsWindow(new_page);
+        editingModeEnabled.set(true);
+        return new_page;
     }
 
 }
