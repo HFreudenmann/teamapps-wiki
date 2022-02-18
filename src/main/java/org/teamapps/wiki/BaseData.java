@@ -1,5 +1,6 @@
 package org.teamapps.wiki;
 
+import org.apache.commons.lang3.StringUtils;
 import org.teamapps.wiki.model.wiki.Book;
 import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.ContentBlock;
@@ -13,9 +14,10 @@ public class BaseData {
 
     public static void createBaseData() {
 
-        Page.getAll().forEach(page -> {
-            if (page.getParent() != null && page.getParent().equals(page)){ page.setParent(null).save(); }
-        });
+//        Page.getAll().forEach(page -> {
+//            if (page.getParent() != null && page.getParent().equals(page)){ page.setParent(null).save(); }
+//        });
+
 
         if (Book.getCount() > 0) {
             return;

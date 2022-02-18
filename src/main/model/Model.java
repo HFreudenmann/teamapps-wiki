@@ -30,6 +30,7 @@ public class Model implements SchemaInfoProvider {
         page
                 .addText("title")
                 .addText("linkTitle")
+                .addText("emoji")
                 .addText("description")
                 .addText("content")
                 .addReference("parent", page, false, "children")

@@ -8,6 +8,7 @@ import org.teamapps.common.format.Color;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.databinding.TwoWayBindableValue;
 import org.teamapps.icon.emoji.EmojiIcon;
+import org.teamapps.icons.Icon;
 import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.application.view.View;
@@ -27,6 +28,7 @@ import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
@@ -74,7 +76,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRITING_HAND, "Edit")).onClick.addListener(() -> {
             editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
         });
-        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.GEAR, "Page Settings")).onClick.addListener(() -> {
+        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings")).onClick.addListener(() -> {
             showPageSettingsWindow(selectedPage.get());
         });
 
@@ -109,6 +111,33 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageTitleField.setValue(page.getTitle());
         pageDescriptionField.setValue(page.getDescription());
 
+        ComboBox<EmojiIcon> emojiIconComboBox = new ComboBox<>();
+        // TODO: Fix Browser crash with all icons.
+        // List<EmojiIcon> iconList = EmojiIcon.getIcons();
+        List<EmojiIcon> iconList = List.of(
+                EmojiIcon.AIRPLANE,
+                EmojiIcon.GENIE,
+                EmojiIcon.BEETLE,
+                EmojiIcon.GRINNING_FACE,
+                EmojiIcon.STAR,
+                EmojiIcon.RED_HEART,
+                EmojiIcon.DECIDUOUS_TREE,
+                EmojiIcon.WARNING,
+                EmojiIcon.FIRE
+        );
+        ListTreeModel<EmojiIcon> iconModel = new ListTreeModel<>(iconList);
+        emojiIconComboBox.setModel(iconModel);
+        emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
+        emojiIconComboBox.setPropertyProvider((emojiIcon, propertyNames) -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put(BaseTemplate.PROPERTY_ICON, emojiIcon);
+            map.put(BaseTemplate.PROPERTY_CAPTION, emojiIcon.getIconId());
+            map.put(BaseTemplate.PROPERTY_DESCRIPTION, null);
+            return map;
+        });
+        emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
+        emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
+
 //        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
 //        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
 //        chapterComboBox.setModel(chapterListTreeModel);
@@ -139,7 +168,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), WikiUtils.getPageLevel(p) == 0, true, false));
         pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
 
+
         formWindow.addSection();
+        formWindow.addField("Page Icon", emojiIconComboBox);
         formWindow.addField("Page Title", pageTitleField);
         formWindow.addField("Page Description", pageDescriptionField);
         formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
@@ -156,13 +187,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         formWindow.addButtonGroup().addButton(deletePageButton);
         formWindow.show();
 
+
         saveButton.onClick.addListener(() -> {
             page.setTitle(pageTitleField.getValue());
             page.setDescription(pageDescriptionField.getValue());
 
             Page newParent = pageComboBox.getValue();
-            if (newParent.equals(page)) { newParent = null; }
-            page.setParent(newParent);
+            page.setParent(page.equals(newParent) ? null : newParent);
+            page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
             updateContentView();
             updateNavigationView();
@@ -201,17 +233,17 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
             contentVerticalLayout.addComponent(contentEditor);
 
-            page.getContentBlocks().forEach(contentBlock -> {
-                switch (contentBlock.getContentBlockType()) {
-                    case RICH_TEXT -> {
-                        RichTextEditor richTextEditor = new RichTextEditor();
-                        richTextEditor.setValue(contentBlock.getValue());
-                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
-                        richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
-                        contentVerticalLayout.addComponent(richTextEditor);
-                    }
-                }
-            });
+//            page.getContentBlocks().forEach(contentBlock -> {
+//                switch (contentBlock.getContentBlockType()) {
+//                    case RICH_TEXT -> {
+//                        RichTextEditor richTextEditor = new RichTextEditor();
+//                        richTextEditor.setValue(contentBlock.getValue());
+//                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
+//                        richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
+//                        contentVerticalLayout.addComponent(richTextEditor);
+//                    }
+//                }
+//            });
         } else {
 
             DisplayField contentDisplay = new DisplayField();
@@ -274,7 +306,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageTree.setPropertyProvider((page, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.PAGE_FACING_UP);
+
+            Icon pageIcon;
+            String emoji = page.getEmoji();
+            if (emoji != null ) {
+                pageIcon = EmojiIcon.forUnicode(emoji);
+            } else {
+                pageIcon = EmojiIcon.PAGE_FACING_UP;
+            }
+            map.put(BaseTemplate.PROPERTY_ICON, pageIcon);
             map.put(BaseTemplate.PROPERTY_CAPTION, page.getTitle());
             map.put(BaseTemplate.PROPERTY_DESCRIPTION, page.getDescription());
             return map;
@@ -302,7 +342,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 .setTitle("New Page")
                 .setDescription("")
                 .setChapter(chapter)
-                .setContentBlocks(ContentBlock.create().setContentBlockType(ContentBlockType.RICH_TEXT).setValue("<h2>Title</h2><p>Text</p>"))
+                .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
         showPageSettingsWindow(new_page);
         editingModeEnabled.set(true);
