@@ -77,11 +77,22 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             selectedPage.get().save();
             updateContentView(selectedPage.get());
         });
+
+        ToolbarButton cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
+        cancelButton.setVisible(false);
+        cancelButton.onClick.addListener(() -> {
+            selectedPage.get().clearChanges();
+            editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
+            updateContentView();
+        });
+
         ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit"));
         editButton.onClick.addListener(() -> {
             editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
         });
-        buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings")).onClick.addListener(() -> {
+
+        ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings"));
+        pageSettingsButton.onClick.addListener(() -> {
             showPageSettingsWindow(selectedPage.get());
         });
 
@@ -97,6 +108,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
         editingModeEnabled.onChanged().addListener(enabled -> {
             saveButton.setVisible(enabled);
+            cancelButton.setVisible(enabled);
             editButton.setVisible(!enabled);
             updateContentView(selectedPage.get());
         });
@@ -180,7 +192,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         formWindow.addField("Parent Page", pageComboBox);
 
         // formWindow.addSection(EmojiIcon.WARNING, "Danger Zone");
-        ToolbarButton deletePageButton = ToolbarButton.create(EmojiIcon.CROSS_MARK, "Delete Page", null);
+        ToolbarButton deletePageButton = ToolbarButton.create(EmojiIcon.WASTEBASKET, "Delete Page", null);
         deletePageButton.onClick.addListener(() -> {
             // Todo ConfirmationDialog
             page.delete();
@@ -236,6 +248,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             contentEditor.setValue(page.getContent());
             contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
             contentVerticalLayout.addComponent(contentEditor);
+            contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
+            // reset changes: page.clearChanges();
 
 //            page.getContentBlocks().forEach(contentBlock -> {
 //                switch (contentBlock.getContentBlockType()) {
@@ -357,6 +371,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
         showPageSettingsWindow(new_page);
+        selectedPage.set(new_page);
         editingModeEnabled.set(true);
         return new_page;
     }
