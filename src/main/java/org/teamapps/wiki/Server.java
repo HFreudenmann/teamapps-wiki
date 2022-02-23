@@ -49,6 +49,7 @@ public class Server {
         }
         // // Generate Demo data
         BaseData.createBaseData();
+        System.out.println("Wiki Content:");
         System.out.println("Books:" + Book.getCount());
         System.out.println("Pages:" + Page.getCount());
     }

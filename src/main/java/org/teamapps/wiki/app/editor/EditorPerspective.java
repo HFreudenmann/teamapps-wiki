@@ -1,5 +1,6 @@
 package org.teamapps.wiki.app.editor;
 
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
@@ -26,6 +27,7 @@ import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
 import org.teamapps.ux.component.tree.Tree;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
+import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.*;
@@ -33,6 +35,7 @@ import org.teamapps.wiki.model.wiki.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
 
@@ -133,20 +136,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageDescriptionField.setValue(page.getDescription());
 
         ComboBox<EmojiIcon> emojiIconComboBox = new ComboBox<>();
-        // TODO: Fix Browser crash with all icons.
-        // List<EmojiIcon> iconList = EmojiIcon.getIcons();
-        List<EmojiIcon> iconList = List.of(
-                EmojiIcon.AIRPLANE,
-                EmojiIcon.GENIE,
-                EmojiIcon.BEETLE,
-                EmojiIcon.GRINNING_FACE,
-                EmojiIcon.STAR,
-                EmojiIcon.RED_HEART,
-                EmojiIcon.DECIDUOUS_TREE,
-                EmojiIcon.WARNING,
-                EmojiIcon.FIRE
-        );
-        ListTreeModel<EmojiIcon> iconModel = new ListTreeModel<>(iconList);
+        List<EmojiIcon> iconList = EmojiIcon.getIcons();
+        ComboBoxModel<EmojiIcon> iconModel = s -> iconList.stream()
+                .filter(emojiIcon -> s == null || StringUtils.containsIgnoreCase(emojiIcon.getIconId(), s))
+                .limit(100)
+                .collect(Collectors.toList());
         emojiIconComboBox.setModel(iconModel);
         emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
         emojiIconComboBox.setPropertyProvider((emojiIcon, propertyNames) -> {
