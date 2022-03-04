@@ -16,6 +16,8 @@ import org.teamapps.icons.composite.CompositeIcon;
 import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.application.view.View;
+import org.teamapps.ux.component.dialogue.Dialogue;
+import org.teamapps.ux.component.field.Button;
 import org.teamapps.ux.component.field.DisplayField;
 import org.teamapps.ux.component.field.FieldEditingMode;
 import org.teamapps.ux.component.field.TextField;
@@ -23,18 +25,20 @@ import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.field.richtext.RichTextEditor;
 import org.teamapps.ux.component.flexcontainer.VerticalLayout;
 import org.teamapps.ux.component.template.BaseTemplate;
+import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
 import org.teamapps.ux.component.tree.Tree;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
+import org.teamapps.ux.session.CurrentSessionContext;
 import org.teamapps.wiki.app.WikiUtils;
-import org.teamapps.wiki.model.wiki.*;
+import org.teamapps.wiki.model.wiki.Book;
+import org.teamapps.wiki.model.wiki.Chapter;
+import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
@@ -70,6 +74,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             // pageTreeModel.setRecords(selectedChapter.get().getPages());
             updateNavigationView();
         });
+
+        navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
+        ToolbarButton upButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
+        ToolbarButton downButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
+        upButton.onClick.addListener(() -> reorderPage(selectedPage.get(), true));
+        downButton.onClick.addListener(() -> reorderPage(selectedPage.get(), false));
+
 
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton saveButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes"));
@@ -168,7 +179,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
 
         ComboBox<Page> pageComboBox = new ComboBox<>();
-        ListTreeModel<Page> pageListModel = new ListTreeModel<>(page.getChapter().getPages());
+        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getPages(page.getChapter()));
         pageComboBox.setModel(pageListModel);
         pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageComboBox.setPropertyProvider(getPagePropertyProvider());
@@ -185,23 +196,31 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
         formWindow.addField("Parent Page", pageComboBox);
 
-        // formWindow.addSection(EmojiIcon.WARNING, "Danger Zone");
-        ToolbarButton deletePageButton = ToolbarButton.create(EmojiIcon.WASTEBASKET, "Delete Page", null);
-        deletePageButton.onClick.addListener(() -> {
-            // Todo ConfirmationDialog
-            page.delete();
-            selectedPage.set(null);
-            formWindow.close();
+        Button<BaseTemplateRecord> deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
+        formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
+        formWindow.getFormLayout().addLabelComponent(deleteButton);
+        formWindow.addField("Delete page permanently", deleteButton);
+        deleteButton.onClicked.addListener(() -> {
+            Dialogue okCancel = Dialogue.createOkCancel(EmojiIcon.WARNING, "Permanently delete page \"" + page.getTitle() + "\"?", "Do you really want to delete this page?");
+            okCancel.show();
+            okCancel.onResult.addListener(isConfirmed -> {
+                if (isConfirmed) {
+                    page.delete();
+                    selectedPage.set(null);
+                    formWindow.close();
+                } else { }
+            });
         });
-        formWindow.addButtonGroup().addButton(deletePageButton);
-        formWindow.show();
-
 
         saveButton.onClick.addListener(() -> {
             page.setTitle(pageTitleField.getValue());
             page.setDescription(pageDescriptionField.getValue());
 
             Page newParent = pageComboBox.getValue();
+            if (WikiUtils.isChildPage(newParent, page)) {
+                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent");
+                newParent = page.getParent();
+            }
             page.setParent(page.equals(newParent) ? null : newParent);
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
@@ -211,6 +230,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             formWindow.close();
         });
 
+        formWindow.show();
     }
 
     private void updateContentView() {
@@ -312,7 +332,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         chapterComboBox.onValueChanged.addListener(selectedChapter::set);
         navigationLayout.addComponent(chapterComboBox);
 
-        ListTreeModel<Page> pageTreeModel = new ListTreeModel<>(selectedChapter.get().getPages());
+        ListTreeModel<Page> pageTreeModel = new ListTreeModel<>(Collections.EMPTY_LIST);
+        pageTreeModel.setRecords(getPages(selectedChapter.get()));
         Tree<Page> pageTree = new Tree<>(pageTreeModel);
         pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0, true, false));
         pageTree.setOpenOnSelection(true);
@@ -329,11 +350,25 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
         selectedChapter.onChanged().addListener(chapter -> {
             chapterComboBox.setValue(chapter);
-            selectedPage.set(chapter.getPages().stream().findFirst().orElse(null));
+            selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
             pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
 
         navigationView.setComponent(navigationLayout);
+    }
+
+    // List with correct order of children
+    private List<Page> getPages(Chapter chapter) {
+        List<Page> pageList = new ArrayList<>();
+        List<Page> topLevelPages = chapter.getPages().stream().filter(page -> page.getParent() == null).collect(Collectors.toList());
+        addPageNodes(topLevelPages, pageList);
+        return pageList;
+    }
+    private void addPageNodes(List<Page> nodes, List<Page> pageNodes) {
+        for (Page node : nodes) {
+            pageNodes.add(node);
+            addPageNodes(node.getChildren(), pageNodes);
+        }
     }
 
     @NotNull
@@ -358,7 +393,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private Page createNewPage(Chapter chapter) {
         Page new_page = Page.create()
-                .setParent(null)
+                .setParent(selectedPage.get().getParent())
                 .setTitle("New Page")
                 .setDescription("")
                 .setChapter(chapter)
@@ -368,6 +403,46 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedPage.set(new_page);
         editingModeEnabled.set(true);
         return new_page;
+    }
+
+    private void reorderPage(Page page, boolean up) {
+        if (page == null) {
+            return;
+        }
+        if (page.getParent() == null) {
+            ArrayList<Page> pageList = new ArrayList<>(getPages(page.getChapter()));
+            int pos = 0;
+            for (Page node : pageList) {
+                if (node.equals(page)) {
+                    break;
+                }
+                pos++;
+            }
+            if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
+                return;
+            }
+            int newPos = up ? pos - 1 : pos + 1;
+            Collections.swap(pageList, pos, newPos);
+            page.getChapter().setPages(pageList).save();
+        } else {
+            Page parent = page.getParent();
+            ArrayList<Page> pageList = new ArrayList<>(parent.getChildren());
+            int pos = 0;
+            for (Page node : pageList) {
+                if (node.equals(page)) {
+                    break;
+                }
+                pos++;
+            }
+            if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
+                return;
+            }
+            int newPos = up ? pos - 1 : pos + 1;
+            Collections.swap(pageList, pos, newPos);
+            parent.setChildren(pageList).save();
+        }
+        // PageTreeModel.setRecords(getPages(selectedPage.get()));
+        updateNavigationView();
     }
 
 }

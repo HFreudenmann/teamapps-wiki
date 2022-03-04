@@ -12,4 +12,13 @@ public class WikiUtils {
         }
         return level;
     }
+    public static boolean isChildPage(Page potentialChildPage, Page page) {
+        int level = 0;
+        Page parent = potentialChildPage.getParent();
+        while (parent != null) {
+            if (parent.equals(page)){ return true ; }
+            parent = parent.getParent();
+        }
+        return false;
+    }
 }
