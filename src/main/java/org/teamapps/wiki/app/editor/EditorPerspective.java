@@ -72,7 +72,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButtonGroup navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton newPageButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
         newPageButton.onClick.addListener(() -> {
-            createNewPage(selectedChapter.get());
+            Page newPage = createNewPage(selectedChapter.get());
+            selectedPage.set(newPage);
+            showPageSettingsWindow(newPage);
+            editingModeEnabled.set(true);
             // pageTreeModel.setRecords(selectedChapter.get().getPages());
             updateNavigationView();
         });
@@ -88,7 +91,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButton saveButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes"));
         saveButton.setVisible(false);
         saveButton.onClick.addListener(() -> {
-            editingModeEnabled.set(Boolean.FALSE);
+            editingModeEnabled.set(false);
             selectedPage.get().setContent(contentEditor.getValue());
             selectedPage.get().save();
             updateContentView(selectedPage.get());
@@ -108,9 +111,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
 
         ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings"));
-        pageSettingsButton.onClick.addListener(() -> {
-            showPageSettingsWindow(selectedPage.get());
-        });
+        pageSettingsButton.onClick.addListener(() -> showPageSettingsWindow(selectedPage.get()));
 
         selectedPage.onChanged().addListener(page -> {
             if (selectedPage.get() != null) {
@@ -210,7 +211,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                     page.delete();
                     selectedPage.set(null);
                     formWindow.close();
-                } else { }
+                }
             });
         });
 
@@ -304,7 +305,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void updateNavigationView() {
         VerticalLayout navigationLayout = new VerticalLayout();
         ComboBox<Book> bookComboBox = new ComboBox<>();
-        bookComboBox.setModel(new ListTreeModel<Book>(Book.getAll()));
+        bookComboBox.setModel(new ListTreeModel<>(Book.getAll()));
         bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         bookComboBox.setPropertyProvider((book, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
@@ -334,7 +335,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         chapterComboBox.onValueChanged.addListener(selectedChapter::set);
         navigationLayout.addComponent(chapterComboBox);
 
-        ListTreeModel<Page> pageTreeModel = new ListTreeModel<>(Collections.EMPTY_LIST);
+        ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
         pageTreeModel.setRecords(getPages(selectedChapter.get()));
         Tree<Page> pageTree = new Tree<>(pageTreeModel);
         pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0, true, false));
@@ -375,7 +376,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     @NotNull
     private PropertyProvider<Page> getPagePropertyProvider() {
-        PropertyProvider<Page> pagePropertyProvider = (page, propertyNames) -> {
+        return (page, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
 
             Icon pageIcon;
@@ -390,21 +391,16 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             map.put(BaseTemplate.PROPERTY_DESCRIPTION, page.getDescription());
             return map;
         };
-        return pagePropertyProvider;
     }
 
     private Page createNewPage(Chapter chapter) {
-        Page new_page = Page.create()
+        return Page.create()
                 .setParent(selectedPage.get().getParent())
                 .setTitle("New Page")
                 .setDescription("")
                 .setChapter(chapter)
                 .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
-        showPageSettingsWindow(new_page);
-        selectedPage.set(new_page);
-        editingModeEnabled.set(true);
-        return new_page;
     }
 
     private void reorderPage(Page page, boolean up) {

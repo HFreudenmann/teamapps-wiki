@@ -11,6 +11,7 @@ import org.teamapps.application.api.theme.ApplicationIcons;
 import org.teamapps.application.api.versioning.ApplicationVersion;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.universaldb.schema.SchemaInfoProvider;
+import org.teamapps.wiki.app.books.BooksPerspectiveBuilder;
 import org.teamapps.wiki.app.editor.EditorPerspectiveBuilder;
 import org.teamapps.wiki.model.WikiSchema;
 
@@ -27,7 +28,8 @@ public class WikiApplicationBuilder extends AbstractApplicationBuilder {
     @Override
     public List<PerspectiveBuilder> getPerspectiveBuilders() {
         return Arrays.asList(
-                new EditorPerspectiveBuilder()
+                new EditorPerspectiveBuilder(),
+                new BooksPerspectiveBuilder()
         );
     }
 
