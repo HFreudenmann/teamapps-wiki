@@ -13,7 +13,9 @@ public class WikiUtils {
         return level;
     }
     public static boolean isChildPage(Page potentialChildPage, Page page) {
-        int level = 0;
+        if (potentialChildPage == null) {
+            return false;
+        }
         Page parent = potentialChildPage.getParent();
         while (parent != null) {
             if (parent.equals(page)){ return true ; }

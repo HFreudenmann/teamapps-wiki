@@ -66,6 +66,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         navigationView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
         contentView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
         contentView.getPanel().setPadding(10);
+        contentView.getPanel().setStretchContent(false);
+
 
         ToolbarButtonGroup navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton newPageButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
