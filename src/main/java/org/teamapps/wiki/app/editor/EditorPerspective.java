@@ -378,10 +378,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         navigationView.setComponent(navigationLayout);
     }
 
+    @NotNull
+    private List<Page> getTopLevelPages(Chapter chapter) {
+        return chapter.getPages().stream().filter(page -> page.getParent() == null).collect(Collectors.toList());
+    }
+
     // List with correct order of children
     private List<Page> getPages(Chapter chapter) {
         List<Page> pageList = new ArrayList<>();
-        List<Page> topLevelPages = chapter.getPages().stream().filter(page -> page.getParent() == null).collect(Collectors.toList());
+        List<Page> topLevelPages = getTopLevelPages(chapter);
         addPageNodes(topLevelPages, pageList);
         return pageList;
     }
@@ -426,7 +431,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             return;
         }
         if (page.getParent() == null) {
-            ArrayList<Page> pageList = new ArrayList<>(getPages(page.getChapter()));
+            ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(page.getChapter()));
+
             int pos = 0;
             for (Page node : pageList) {
                 if (node.equals(page)) {
