@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
+import org.teamapps.application.api.user.SessionUser;
 import org.teamapps.application.server.system.session.PerspectiveSessionData;
 import org.teamapps.application.ux.form.FormWindow;
 import org.teamapps.common.format.Color;
@@ -33,6 +34,8 @@ import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
+import org.teamapps.wiki.app.WikiApplicationBuilder;
+import org.teamapps.wiki.app.WikiPageManager;
 import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.Book;
 import org.teamapps.wiki.model.wiki.Chapter;
@@ -43,6 +46,8 @@ import java.util.stream.Collectors;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
 
+    private final WikiPageManager pageManager;
+    private final SessionUser user;
     private View navigationView;
     private View contentView;
     private final TwoWayBindableValue<Book> selectedBook = TwoWayBindableValue.create();
@@ -54,7 +59,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     public EditorPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
         super(applicationInstanceData, perspectiveInfoBadgeValue);
         PerspectiveSessionData perspectiveSessionData = (PerspectiveSessionData) getApplicationInstanceData();
-
+        pageManager = WikiApplicationBuilder.PAGE_MANAGER;
+        user = perspectiveSessionData.getUser();
         createUi();
     }
 
@@ -92,22 +98,32 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         saveButton.setVisible(false);
         saveButton.onClick.addListener(() -> {
             editingModeEnabled.set(false);
-            selectedPage.get().setContent(contentEditor.getValue());
-            selectedPage.get().save();
-            updateContentView(selectedPage.get());
+            Page page = selectedPage.get();
+            page.setContent(contentEditor.getValue());
+            page.save();
+            pageManager.unlockPage(page, user);
+            updateContentView(page);
         });
 
         ToolbarButton cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
         cancelButton.setVisible(false);
         cancelButton.onClick.addListener(() -> {
-            selectedPage.get().clearChanges();
-            editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
-            updateContentView();
+            editingModeEnabled.set(false);
+            Page page = selectedPage.get();
+            page.clearChanges();
+            pageManager.unlockPage(page, user);
+            updateContentView(page);
         });
 
         ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit"));
         editButton.onClick.addListener(() -> {
-            editingModeEnabled.set(!editingModeEnabled.get()); // switch on/off
+            Page page = selectedPage.get();
+            WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
+            if (pageStatus.getEditor().equals(user)){
+                editingModeEnabled.set(true); // switch on/off
+            } else {
+                CurrentSessionContext.get().showNotification(EmojiIcon.NO_ENTRY, "Page locked", "by " + pageStatus.getEditor().getName(false) + " since " + pageStatus.getLockSince().toString());
+            }
         });
 
         ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings"));
@@ -117,6 +133,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             if (selectedPage.get() != null) {
                 updateContentView(selectedPage.get());
                 contentView.getPanel().setTitle(page.getTitle());
+                WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
+                editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
                 contentView.focus();
             } else {
                 selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));

@@ -45,7 +45,24 @@ public class Server {
         if (User.getCount() == 0) {
             OrganizationUnitType unitType = OrganizationUnitType.create().setName(TranslatableText.create("en", "Unit"));
             OrganizationUnit.create().setType(unitType).setName(TranslatableText.create("en", "Organization")).save();
-            User.create().setFirstName("Super").setLastName("Admin").setLogin("admin").setPassword(SecurePasswordHash.createDefault().createSecureHash("teamapps!")).setUserAccountStatus(UserAccountStatus.SUPER_ADMIN).setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr"))).save();
+            User.create()
+                    .setFirstName("Super")
+                    .setLastName("Admin")
+                    .setLogin("admin")
+                    .setPassword(SecurePasswordHash.createDefault().createSecureHash("teamapps!"))
+                    .setUserAccountStatus(UserAccountStatus.SUPER_ADMIN)
+                    .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr")))
+                    .save();
+        }
+        if (User.getCount() == 1) {
+            User.create()
+                    .setFirstName("Demo")
+                    .setLastName("User")
+                    .setLogin("demo")
+                    .setPassword(SecurePasswordHash.createDefault().createSecureHash("demo!"))
+                    .setUserAccountStatus(UserAccountStatus.ACTIVE)
+                    .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr")))
+                    .save();
         }
         // // Generate Demo data
         BaseData.createBaseData();

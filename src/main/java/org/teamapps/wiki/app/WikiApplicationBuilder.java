@@ -20,6 +20,7 @@ import java.util.*;
 
 public class WikiApplicationBuilder extends AbstractApplicationBuilder {
 
+    public static WikiPageManager PAGE_MANAGER = new WikiPageManager();
 
     public WikiApplicationBuilder() {
         super("wiki", EmojiIcon.BOOKS, "Wiki", "Wiki Books");
