@@ -80,10 +80,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         newPageButton.onClick.addListener(() -> {
             Page newPage = createNewPage(selectedChapter.get());
             selectedPage.set(newPage);
-            showPageSettingsWindow(newPage);
-            editingModeEnabled.set(true);
-            // pageTreeModel.setRecords(selectedChapter.get().getPages());
             updateNavigationView();
+            editPage(newPage);
+            showPageSettingsWindow(newPage);
+            // pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
 
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
@@ -118,12 +118,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit"));
         editButton.onClick.addListener(() -> {
             Page page = selectedPage.get();
-            WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
-            if (pageStatus.getEditor().equals(user)){
-                editingModeEnabled.set(true); // switch on/off
-            } else {
-                CurrentSessionContext.get().showNotification(EmojiIcon.NO_ENTRY, "Page locked", "by " + pageStatus.getEditor().getName(false) + " since " + pageStatus.getLockSince().toString());
-            }
+            editPage(page);
         });
 
         ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings"));
@@ -153,6 +148,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
 
         updateNavigationView();
+    }
+
+    private void editPage(Page page) {
+        WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
+        if (pageStatus.getEditor().equals(user)){
+            editingModeEnabled.set(true); // switch on/off
+        } else {
+            CurrentSessionContext.get().showNotification(EmojiIcon.NO_ENTRY, "Page locked", "by " + pageStatus.getEditor().getName(false) + " since " + pageStatus.getLockSince().toString());
+        }
     }
 
     private void showPageSettingsWindow(Page page) {
@@ -200,7 +204,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
 
         ComboBox<Page> pageComboBox = new ComboBox<>();
-        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getPages(page.getChapter()));
+        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getPages(selectedChapter.get()));
         pageComboBox.setModel(pageListModel);
         pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageComboBox.setPropertyProvider(getPagePropertyProvider());
