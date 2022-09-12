@@ -1,162 +1,291 @@
 package org.teamapps.wiki;
 
-import org.apache.commons.lang3.StringUtils;
-import org.teamapps.wiki.model.wiki.Book;
-import org.teamapps.wiki.model.wiki.Chapter;
-import org.teamapps.wiki.model.wiki.ContentBlock;
-import org.teamapps.wiki.model.wiki.ContentBlockType;
-import org.teamapps.wiki.model.wiki.Page;
+import org.teamapps.wiki.model.wiki.*;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class BaseData {
 
+    public static void createDemoData() {
 
-    public static void createBaseData() {
+        boolean isDemoDataAvailable = (Book.getCount() > 0);
 
-//        Page.getAll().forEach(page -> {
-//            if (page.getParent() != null && page.getParent().equals(page)){ page.setParent(null).save(); }
-//        });
-
-
-        if (Book.getCount() > 0) {
+        if (isDemoDataAvailable) {
+            System.out.println("    # books available : " + Book.getCount());
             return;
         }
 
-        Book demoBook1 = Book.create().setTitle("Demo Book")
-                .setDescription("Automatically created Demo Wiki Book")
+        createLatinDemoBook();
+        createUbuntuDemoBook();
+        createCarnegieDemoBook();
+        createEmptyBooks();
+
+        System.out.println("    # books created : " + Book.getCount());
+    }
+
+    private static void createLatinDemoBook() {
+        Book demoBook = Book.create()
+                .setTitle("Pieces of wisdom").setDescription("Latin pieces of wisdom from all around the world")
                 .save();
 
         Chapter chapter1 = Chapter.create()
-                .setTitle("Introduction")
-                .setDescription("Introduction into the world of Wiki books")
-                .setBook(demoBook1)
+                .setBook(demoBook)
+                .setTitle("Introduction").setDescription("Introduction into the world of pieces of wisdom")
                 .save();
-
-        Page page1 = Page.create()
-                .setTitle("Welcome")
-                .setDescription("Welcome to the world of Wiki books")
-                .setChapter(chapter1)
-                .setContent("<h2>Title</h2>" +
-                        "<p>" +
-                        "Lorem <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-                        "</p>" +
-                        "<p>" +
-                        "Neque egestas congue quisque egestas. Et pharetra pharetra massa massa. Enim sit amet venenatis urna cursus eget. Curabitur gravida arcu ac tortor dignissim convallis aenean. In vitae turpis massa sed elementum tempus egestas sed sed. Augue eget arcu dictum varius duis at. Iaculis nunc sed augue lacus viverra vitae congue. Malesuada fames ac turpis egestas sed. Arcu non sodales neque sodales ut etiam sit. Nisl condimentum id venenatis a condimentum. Amet nisl purus in mollis nunc sed id semper. Sed blandit libero volutpat sed. Elit eget gravida cum sociis. Cursus eget nunc scelerisque viverra mauris in. Enim sed faucibus turpis in. Purus semper eget duis at tellus. Diam vel quam elementum pulvinar etiam non. Donec pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Feugiat sed lectus vestibulum mattis." +
-                        "</p>" +
-                        "<h2>Title 2</h2>" +
-                        "<p>" +
-                        "More Content with <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-                        "</p>"
-
-                )
-//                .setContentBlocks(List.of(
-//                        ContentBlock.create()
-//                                .setContentBlockType(ContentBlockType.RICH_TEXT)
-//                                .setValue("<h2>Title</h2>" +
-//                                        "<p>" +
-//                                            "Lorem <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-//                                        "</p>" +
-//                                        "<p>" +
-//                                            "Neque egestas congue quisque egestas. Et pharetra pharetra massa massa. Enim sit amet venenatis urna cursus eget. Curabitur gravida arcu ac tortor dignissim convallis aenean. In vitae turpis massa sed elementum tempus egestas sed sed. Augue eget arcu dictum varius duis at. Iaculis nunc sed augue lacus viverra vitae congue. Malesuada fames ac turpis egestas sed. Arcu non sodales neque sodales ut etiam sit. Nisl condimentum id venenatis a condimentum. Amet nisl purus in mollis nunc sed id semper. Sed blandit libero volutpat sed. Elit eget gravida cum sociis. Cursus eget nunc scelerisque viverra mauris in. Enim sed faucibus turpis in. Purus semper eget duis at tellus. Diam vel quam elementum pulvinar etiam non. Donec pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Feugiat sed lectus vestibulum mattis." +
-//                                        "</p>"
-//                                ),
-//                        ContentBlock.create()
-//                                .setContentBlockType(ContentBlockType.RICH_TEXT)
-//                                .setValue("<h2>Title of Block 2</h2>" +
-//                                        "<p>" +
-//                                        "Different Block with <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-//                                        "</p>"
-//                                )
-//                ))
-                .save();
-        Page page2 = Page.create()
-                .setTitle("Basics")
-                .setDescription("Basic Structure of a Wiki Book")
-                .setChapter(chapter1)
-                .setContent(
-                        "<h2>Structure</h2>" +
-                                "<p>" +
-                                "Sapien et ligula ullamcorper malesuada proin libero nunc consequat. Lobortis feugiat vivamus at augue eget arcu dictum varius duis. Nunc aliquet bibendum enim facilisis gravida neque convallis. Blandit turpis cursus in hac habitasse platea dictumst quisque. Tortor dignissim convallis aenean et tortor. Morbi enim nunc faucibus a pellentesque. Eu facilisis sed odio morbi quis commodo odio aenean sed. Nibh cras pulvinar mattis nunc sed. Odio ut enim blandit volutpat maecenas volutpat blandit aliquam. Sit amet nisl purus in mollis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra nam. Magna fringilla urna porttitor rhoncus. Morbi tempus iaculis urna id. Auctor urna nunc id cursus metus aliquam." +
-                                "</p>" +
-                                "<p>" +
-                                "Eget duis at tellus at urna condimentum. Aliquet bibendum enim facilisis gravida neque convallis a. Vestibulum mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare massa. Massa tempor nec feugiat nisl pretium fusce id. A scelerisque purus semper eget. Arcu non sodales neque sodales. Magna etiam tempor orci eu lobortis elementum. Arcu felis bibendum ut tristique. Ac orci phasellus egestas tellus rutrum tellus. Ipsum suspendisse ultrices gravida dictum fusce ut placerat orci nulla." +
-                                "</p>"
-                )
-//                .setContentBlocks(List.of(
-//                        ContentBlock.create()
-//                                .setContentBlockType(ContentBlockType.RICH_TEXT)
-//                                .setValue("<h2>Structure</h2>" +
-//                                        "<p>" +
-//                                        "Sapien et ligula ullamcorper malesuada proin libero nunc consequat. Lobortis feugiat vivamus at augue eget arcu dictum varius duis. Nunc aliquet bibendum enim facilisis gravida neque convallis. Blandit turpis cursus in hac habitasse platea dictumst quisque. Tortor dignissim convallis aenean et tortor. Morbi enim nunc faucibus a pellentesque. Eu facilisis sed odio morbi quis commodo odio aenean sed. Nibh cras pulvinar mattis nunc sed. Odio ut enim blandit volutpat maecenas volutpat blandit aliquam. Sit amet nisl purus in mollis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra nam. Magna fringilla urna porttitor rhoncus. Morbi tempus iaculis urna id. Auctor urna nunc id cursus metus aliquam." +
-//                                        "</p>" +
-//                                        "<p>" +
-//                                        "Eget duis at tellus at urna condimentum. Aliquet bibendum enim facilisis gravida neque convallis a. Vestibulum mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare massa. Massa tempor nec feugiat nisl pretium fusce id. A scelerisque purus semper eget. Arcu non sodales neque sodales. Magna etiam tempor orci eu lobortis elementum. Arcu felis bibendum ut tristique. Ac orci phasellus egestas tellus rutrum tellus. Ipsum suspendisse ultrices gravida dictum fusce ut placerat orci nulla." +
-//                                        "</p>"
-//                                )
-//                ))
-                .save();
-        Page page2subpage1 = Page.create()
-                .setParent(page2)
-                .setTitle("Editing")
-                .setDescription("Editing a Wiki Book")
-                .setChapter(chapter1)
-                .setContent(
-                        "<h2>Editing</h2>" +
-                        "<p>" +
-                        "Quis <b>hendrerit</b> dolor magna eget est lorem. Metus vulputate eu scelerisque felis. Eu facilisis sed odio morbi quis commodo odio aenean sed. Condimentum vitae sapien pellentesque habitant morbi tristique senectus. Sit amet nulla facilisi morbi tempus. Pharetra diam sit amet nisl suscipit adipiscing bibendum est ultricies. Donec massa sapien faucibus et molestie ac. Porttitor eget dolor morbi non arcu risus quis. Diam vel quam elementum pulvinar. Erat pellentesque adipiscing commodo elit at imperdiet. Mauris in aliquam sem fringilla ut morbi tincidunt. Vitae suscipit tellus mauris a diam maecenas sed enim ut. Nisi vitae suscipit tellus mauris a diam. Eget aliquet nibh praesent tristique magna sit amet purus. Lectus vestibulum mattis ullamcorper velit. Purus in mollis nunc sed." +
-                        "</p>"
-                )
-                .save();
-
 
         Chapter chapter2 = Chapter.create()
-                .setTitle("Features")
-                .setDescription("Features of a Wiki Book")
-                .setBook(demoBook1)
+                .setBook(demoBook)
+                .setTitle("Health").setDescription("Pieces of wisdom concerning health")
                 .save();
-        Page c2page1 = Page.create()
-                .setTitle("Rich Text")
-                .setDescription("Text Editing and Formatting")
+        Page page1 = Page.create()
                 .setChapter(chapter2)
-                .setContent(
-                        "<h2>How To Format a Text</h2>" +
-                        "<p>" +
-                        "Sapien et ligula ullamcorper malesuada proin libero nunc consequat. Lobortis feugiat vivamus at augue eget arcu dictum varius duis. Nunc aliquet bibendum enim facilisis gravida neque convallis. Blandit turpis cursus in hac habitasse platea dictumst quisque. Tortor dignissim convallis aenean et tortor. Morbi enim nunc faucibus a pellentesque. Eu facilisis sed odio morbi quis commodo odio aenean sed. Nibh cras pulvinar mattis nunc sed. Odio ut enim blandit volutpat maecenas volutpat blandit aliquam. Sit amet nisl purus in mollis nunc sed. Luctus accumsan tortor posuere ac ut consequat semper viverra nam. Magna fringilla urna porttitor rhoncus. Morbi tempus iaculis urna id. Auctor urna nunc id cursus metus aliquam." +
-                        "</p>" +
-                        "<p>" +
-                        "Eget duis at tellus at urna condimentum. Aliquet bibendum enim facilisis gravida neque convallis a. Vestibulum mattis ullamcorper velit sed ullamcorper morbi tincidunt ornare massa. Massa tempor nec feugiat nisl pretium fusce id. A scelerisque purus semper eget. Arcu non sodales neque sodales. Magna etiam tempor orci eu lobortis elementum. Arcu felis bibendum ut tristique. Ac orci phasellus egestas tellus rutrum tellus. Ipsum suspendisse ultrices gravida dictum fusce ut placerat orci nulla." +
-                        "</p>"
+                .setTitle("Happiness").setDescription("...")
+                .setContent("<h2>Pieces of wisdom concerning happiness</h2>" +
+                        "<h3>... from Europe</h3>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
+                        "<h3>... from Asia</h3>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>"
                 )
                 .save();
-
-        Book book2 = Book.create().setTitle("Book Number Two")
-                .setDescription("Another Book")
+        Page.create()
+                .setChapter(chapter2).setParent(page1)
+                .setTitle("Rare phrases I").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
+                .save();
+        Page.create()
+                .setChapter(chapter2).setParent(page1)
+                .setTitle("Rare phrases II").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
+                .save();
+        Page subpage1_3 = Page.create()
+                .setChapter(chapter2).setParent(page1)
+                .setTitle("Famous phrases").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
+                .save();
+        Page.create()
+                .setChapter(chapter2).setParent(subpage1_3)
+                .setTitle("Famous phrases a)").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
+                .save();
+        Page.create()
+                .setChapter(chapter2).setParent(subpage1_3)
+                .setTitle("Famous phrases b)").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
 
-        Chapter b2chapter1 = Chapter.create()
-                .setTitle("Chapter One")
-                .setDescription("Not Chapter Two")
-                .setBook(book2)
+        Page.create()
+                .setChapter(chapter2)
+                .setTitle("Contentment").setDescription("...")
+                .setContent("<h2>Pieces of wisdom concerning contentment</h2>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
 
-        Page b2page1 = Page.create()
-                .setTitle("Hello Wiki")
-                .setDescription("Description")
-                .setChapter(b2chapter1)
-                .setContent(
-                        "<h2>Title</h2>" +
-                        "<p>" +
-                        "Lorem <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-                        "</p>" +
-                        "<p>" +
-                        "Neque egestas congue quisque egestas. Et pharetra pharetra massa massa. Enim sit amet venenatis urna cursus eget. Curabitur gravida arcu ac tortor dignissim convallis aenean. In vitae turpis massa sed elementum tempus egestas sed sed. Augue eget arcu dictum varius duis at. Iaculis nunc sed augue lacus viverra vitae congue. Malesuada fames ac turpis egestas sed. Arcu non sodales neque sodales ut etiam sit. Nisl condimentum id venenatis a condimentum. Amet nisl purus in mollis nunc sed id semper. Sed blandit libero volutpat sed. Elit eget gravida cum sociis. Cursus eget nunc scelerisque viverra mauris in. Enim sed faucibus turpis in. Purus semper eget duis at tellus. Diam vel quam elementum pulvinar etiam non. Donec pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu. Feugiat sed lectus vestibulum mattis." +
-                        "</p>" +
-                        "<h2>Title 2</h2>" +
-                        "<p>" +
-                        "More Content with <i>ipsum</i> dolor sit <b>amet</b>, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." +
-                        "</p>"
-                )
+        Chapter chapter3 = Chapter.create()
+                .setTitle("Short phrases")
+                .setDescription("...")
+                .setBook(demoBook)
+                .save();
+        Page.create()
+                .setChapter(chapter3)
+                .setContent("<p>Carpe diem. Anno Domini. A priori. Curriculum Vitae. Ora et labora. De facto.</p>")
+                .setContentBlocks(List.of(
+                        ContentBlock.create()
+                                .setContentBlockType(ContentBlockType.RICH_TEXT)
+                                .setValue("<h4>Title of content block 1</h4>" +
+                                        "<i>A priori. Curriculum Vitae. Ora et labora. De facto.</i>"),
+                        ContentBlock.create()
+                                .setContentBlockType(ContentBlockType.RICH_TEXT)
+                                .setValue("<h5>Title of content block 2</h5>" +
+                                        "<p>Curriculum Vitae. Ora et labora. De facto.</p>")
+                ))
                 .save();
     }
+
+
+    private static void createUbuntuDemoBook() {
+        Book demoBook = Book.create().setTitle("Ubuntu Server Manual")
+                .setDescription("Information on using Ubuntu Server")
+                .save();
+
+        Chapter chapter1 = Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Getting Started")
+                .save();
+
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Basic Installation").setDescription("How to install Ubuntu Server Edition")
+                .setContent(    "<h1>Basic installation</h1>" +
+                                "<p>This chapter provides ... </p>" +
+                                "<h2>Preparing to Install</h2>" +
+                                "<p>This section explains ...</p>" +
+                                "<h3>System requirements</h3>" +
+                                "<p>...</p>" +
+                                "<h3>Server and Desktop Edition differences</h3>" +
+                                "<p>The main difference is ... </p>"
+                )
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Automated Installation").setDescription("Automate installation using autoinstall")
+                .setContent("...")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Using Docker containers").setDescription("Run Ubuntu Server in a Docker container")
+                .setContent("...")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Cloud Images").setDescription("Run Ubuntu Server on a cloud provider")
+                .setContent("...")
+                .save();
+
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Refining Your Infrastructure")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Configuring Your Services")
+                .save();
+    }
+
+    private static void createCarnegieDemoBook() {
+
+        Book demoBook = Book.create().setTitle("How to Develop Self Confidence ...  / D. Carnegie")
+                .setDescription("From ways to develop self-confidence and become a good public speaker to the secrets of memory power ...")
+                .save();
+
+        Chapter chapter1 = Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Developing Courage and Self-Confidence").setDescription("...")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Developing Courage and Self-Confidence")
+                .setContent("<p>MORE than five hundred thousend men and women, since 1912, have been members ..</p>")
+                .save();
+
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Self-Confidence Through Preparation").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("How Famous Speakers Prepared Their Addresses").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("The Improvement of Memory").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Essential Elements of Successful Speaking").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("The Secret of Good Delivery").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Platform Presence and Personality").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("How to Open a Talk").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("How to Close a Talk").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("How to Make Your Meaning Clear").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("How to Interest Your Audience").setDescription("...")
+                .save();
+        Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Improving Your Diction").setDescription("...")
+                .save();
+    }
+
+    private static void createEmptyBooks() {
+
+        Book.create().setTitle("Video Editing").setDescription("How to cut, modify and arrange videos")
+                .save();
+        Book.create().setTitle("Film recording").setDescription("How to record professional videos")
+                .save();
+        Book.create().setTitle("Mixer manual for XYZ").setDescription("Manual of audio mixer XYZ")
+                .save();
+        Book.create().setTitle("French Grammar").setDescription("...")
+                .save();
+        Book.create().setTitle("French Dictionary").setDescription("...")
+                .save();
+        Book.create().setTitle("German Dictionary").setDescription("...")
+                .save();
+        Book.create().setTitle("Java for Beginners").setDescription("How to programm with Java 17")
+                .save();
+    }
+
+    private static int createRandomCount() {
+        final int minimumCount = 3;
+        final int maximumCount = 111;
+        return ThreadLocalRandom.current().nextInt(minimumCount, maximumCount);
+    }
+
+    private static String createRandomLatinPhrases(int noOfPhrases) {
+        List<String> phrases = List.of("Carpe diem.",
+                "<b>Faber est suae quisque fortunae.</b>",
+                "Cessante causa cessat effectus.",
+                "Amicus certus in re incerta cernitur.",
+                "Anno Domini.",
+                "Exercitatio artem parat.",
+                "A <b>priori</b>.",
+                "Male parta, male dilabuntur.",
+                "Malum est <i>consilium</i>, quod mutari non potest!",
+                "Contra vim mortis non est medicamen in hortis.",
+                "Curriculum Vitae.",
+                "Melius est prevenire quam preveniri.",
+                "Caritas omnia potest.",
+                "Ora et labora.",
+                "<i>Quod tibi fieri non vis, <b>alteri</b> ne feceris.</i>",
+                "<u>De facto.</u>",
+                "Caritas omnia tolerat. Sol lucet omnibus.",
+                "Abyssus abyssum invocat.",
+                "Qui dare multa potest, multa et amare potest.",
+                "Nihil fit sine causa. Omne animal se ipse diligit.",
+                "Amor est parens multarum voluptatum.",
+                "<b>Si deus pro nobis, quis contra nos?</b>",
+                "Abyssus abyssum invocat.",
+                "Qui dare multa potest, multa et amare potest.",
+                "Nihil fit sine causa.",
+                "<i>Omne animal se ipse diligit.</i>",
+                "Amor est parens multarum voluptatum.",
+                "Si deus pro nobis, quis contra nos?");
+
+        boolean isEndOfListReached;
+        StringBuilder combinedString = new StringBuilder();
+        // set a random start index
+        int j = ThreadLocalRandom.current().nextInt(0, phrases.size() - 1);
+
+        for (int i = 0; i < noOfPhrases; i++) {
+            combinedString.append(phrases.get(j)).append(" ");
+
+            j++;
+            isEndOfListReached = (j >= phrases.size());
+            if (isEndOfListReached) {
+                j = 0;
+            }
+        }
+
+        return combinedString.toString();
+    }
+
 }

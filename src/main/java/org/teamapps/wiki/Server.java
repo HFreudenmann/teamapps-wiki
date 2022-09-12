@@ -1,23 +1,15 @@
 package org.teamapps.wiki;
 
-import org.teamapps.application.api.password.SecurePasswordHash;
 import org.teamapps.application.server.system.bootstrap.BootstrapSessionHandler;
 import org.teamapps.application.server.system.server.ApplicationServer;
 import org.teamapps.application.server.system.server.SessionRegistryHandler;
 import org.teamapps.application.server.system.session.UserSessionData;
-import org.teamapps.application.server.system.utils.ValueConverterUtils;
-import org.teamapps.model.controlcenter.OrganizationUnit;
-import org.teamapps.model.controlcenter.OrganizationUnitType;
-import org.teamapps.model.controlcenter.User;
-import org.teamapps.model.controlcenter.UserAccountStatus;
-import org.teamapps.universaldb.index.translation.TranslatableText;
 import org.teamapps.ux.session.SessionContext;
 import org.teamapps.wiki.app.WikiApplicationBuilder;
 import org.teamapps.wiki.model.wiki.Book;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class Server {
     public static void main(String[] args) throws Exception {
@@ -38,36 +30,12 @@ public class Server {
 		applicationServer.setSessionHandler(bootstrapSessionHandler);
 		applicationServer.start();
 
-
         bootstrapSessionHandler.getSystemRegistry().installAndLoadApplication(new WikiApplicationBuilder());
 
+        // Generate Demo data
+        AccountData.createDemoData();
+        BaseData.createDemoData();
 
-        if (User.getCount() == 0) {
-            OrganizationUnitType unitType = OrganizationUnitType.create().setName(TranslatableText.create("en", "Unit"));
-            OrganizationUnit.create().setType(unitType).setName(TranslatableText.create("en", "Organization")).save();
-            User.create()
-                    .setFirstName("Super")
-                    .setLastName("Admin")
-                    .setLogin("admin")
-                    .setPassword(SecurePasswordHash.createDefault().createSecureHash("teamapps!"))
-                    .setUserAccountStatus(UserAccountStatus.SUPER_ADMIN)
-                    .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr")))
-                    .save();
-        }
-        if (User.getCount() == 1) {
-            User.create()
-                    .setFirstName("Demo")
-                    .setLastName("User")
-                    .setLogin("demo")
-                    .setPassword(SecurePasswordHash.createDefault().createSecureHash("demo!"))
-                    .setUserAccountStatus(UserAccountStatus.ACTIVE)
-                    .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr")))
-                    .save();
-        }
-        // // Generate Demo data
-        BaseData.createBaseData();
-        System.out.println("Wiki Content:");
-        System.out.println("Books:" + Book.getCount());
-        System.out.println("Pages:" + Page.getCount());
+        System.out.println("Wiki Content:   Books : " + Book.getCount() + ", Pages : " + Page.getCount());
     }
 }
