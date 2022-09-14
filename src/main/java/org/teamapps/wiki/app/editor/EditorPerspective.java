@@ -66,18 +66,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void createUi() {
         Perspective perspective = getPerspective();
-        navigationView = perspective.addView(View.createView(ExtendedLayout.LEFT, EmojiIcon.COMPASS, "Book Navigation", null));
-        contentView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.PAGE_FACING_UP, "Inhalt", null));
+        navigationView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.COMPASS, "Book Navigation", null));
+        contentView = perspective.addView(View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", null));
 
-        navigationView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
-        contentView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
-        contentView.getPanel().setPadding(10);
+        navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.84f));
+        contentView.getPanel().setBodyBackgroundColor(Color.BLUE.withAlpha(0.34f));
+        contentView.getPanel().setPadding(70);
         contentView.getPanel().setStretchContent(false);
 
 
         ToolbarButtonGroup navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton newPageButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
         newPageButton.onClick.addListener(() -> {
+            // zuvor prüfen: ist eine andere Seite in Bearbeitung --> speichern / verwerfen ?
             Page newPage = createNewPage(selectedChapter.get());
             selectedPage.set(newPage);
             updateNavigationView();
@@ -89,8 +90,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton upButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
         ToolbarButton downButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
-        upButton.onClick.addListener(() -> reorderPage(selectedPage.get(), true));
-        downButton.onClick.addListener(() -> reorderPage(selectedPage.get(), false));
+        upButton.onClick.addListener(() -> {
+            System.out.println("upButton.onClick()");
+            reorderPage(selectedPage.get(), true);
+        });
+        downButton.onClick.addListener(() ->{
+            System.out.println("downButton.onClick()");
+            reorderPage(selectedPage.get(), false);
+        });
+
 
 
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
@@ -325,6 +333,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void updateNavigationView() {
+
+        System.out.println("updateNavigationView()");
+
         VerticalLayout navigationLayout = new VerticalLayout();
         ComboBox<Book> bookComboBox = new ComboBox<>();
         bookComboBox.setModel(new ListTreeModel<>(Book.getAll()));
@@ -354,11 +365,16 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
         chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
         chapterComboBox.setValue(selectedChapter.get());
-        chapterComboBox.onValueChanged.addListener(selectedChapter::set);
+        chapterComboBox.onValueChanged.addListener(chapter -> {
+            selectedChapter.set(chapter);
+            updateNavigationView();
+        });
         navigationLayout.addComponent(chapterComboBox);
 
         ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-        pageTreeModel.setRecords(getPages(selectedChapter.get()));
+        Chapter currentSelectedChapter = selectedChapter.get();
+        System.out.println("currentSelectedChapter = " + currentSelectedChapter.getTitle());
+        pageTreeModel.setRecords(getPages(currentSelectedChapter));
         Tree<Page> pageTree = new Tree<>(pageTreeModel);
         pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0, true, false));
         pageTree.setOpenOnSelection(true);
@@ -370,10 +386,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         navigationLayout.addComponent(pageTree);
 
         selectedBook.onChanged().addListener(book -> {
+            System.out.println("selectedBook.onChanged() : " + book.getTitle());
             chapterListTreeModel.setRecords(book.getChapters());
             selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
+
         });
         selectedChapter.onChanged().addListener(chapter -> {
+            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
             chapterComboBox.setValue(chapter);
             selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
             pageTreeModel.setRecords(selectedChapter.get().getPages());
@@ -432,9 +451,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void reorderPage(Page page, boolean up) {
         if (page == null) {
+            System.out.println("reorderPage : page = null");
             return;
         }
         if (page.getParent() == null) {
+            System.out.println("reorderPage : page.Parent = null");
             ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(page.getChapter()));
 
             int pos = 0;
@@ -444,6 +465,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 }
                 pos++;
             }
+            System.out.println("  up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
             if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
                 return;
             }
@@ -452,6 +474,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.getChapter().setPages(pageList).save();
         } else {
             Page parent = page.getParent();
+            System.out.println("reorderPage : page = " + page.getTitle());
+
             ArrayList<Page> pageList = new ArrayList<>(parent.getChildren());
             int pos = 0;
             for (Page node : pageList) {
@@ -460,6 +484,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 }
                 pos++;
             }
+            System.out.println("  up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
             if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
                 return;
             }

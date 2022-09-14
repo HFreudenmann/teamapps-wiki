@@ -11,7 +11,7 @@ import org.teamapps.icon.emoji.EmojiIcon;
 public class EditorPerspectiveBuilder extends AbstractPerspectiveBuilder {
 
     public EditorPerspectiveBuilder() {
-        super("wikiEditor", EmojiIcon.WRITING_HAND, "Wiki Editor", "Manage Wiki pages and content");
+        super("wikiEditor", EmojiIcon.WRITING_HAND, "Edit Books", "Manage Wiki pages and content");
     }
 
     @Override
