@@ -29,14 +29,14 @@ public class WikiApplicationBuilder extends AbstractApplicationBuilder {
     @Override
     public List<PerspectiveBuilder> getPerspectiveBuilders() {
         return Arrays.asList(
-                new EditorPerspectiveBuilder(),
-                new BooksPerspectiveBuilder()
+                new BooksPerspectiveBuilder(),
+                new EditorPerspectiveBuilder()
         );
     }
 
     @Override
     public ApplicationVersion getApplicationVersion() {
-        return ApplicationVersion.create(0, 1, 4);
+        return ApplicationVersion.create(0, 1, 5);
     }
 
     @Override
