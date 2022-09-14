@@ -31,21 +31,21 @@ public class BooksPerspective extends AbstractApplicationPerspective {
 
         private void createUi() {
             Perspective perspective = getPerspective();
-            navigationView = perspective.addView(View.createView(ExtendedLayout.LEFT, EmojiIcon.COMPASS, "Book Navigation", null));
-            booksView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.PAGE_FACING_UP, "Inhalt", null));
+            // navigationView = perspective.addView(View.createView(ExtendedLayout.LEFT, EmojiIcon.COMPASS, "Book Navigation II", null));
+            booksView = perspective.addView(View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content II", null));
 
-            navigationView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
-            booksView.getPanel().setBodyBackgroundColor(Color.WHITE.withAlpha(0.84f));
-            booksView.getPanel().setPadding(10);
+            // navigationView.getPanel().setBodyBackgroundColor(Color.LAWN_GREEN.withAlpha(0.54f));
+            booksView.getPanel().setBodyBackgroundColor(Color.LIGHT_GREEN.withAlpha(0.94f));
+            booksView.getPanel().setPadding(20);
 
             updateBooksView();
-
     }
 
     private void updateBooksView() {
         InfiniteItemView2<Book> bookItemView = new InfiniteItemView2<>();
         bookItemView.setModel(new ListInfiniteItemViewModel<>(Book.getAll())); // Todo Model with query
-        bookItemView.setItemTemplate(BaseTemplate.BUTTON_XLARGE);
+        bookItemView.setItemTemplate(BaseTemplate.LIST_ITEM_VERY_LARGE_ICON_TWO_LINES);
+        bookItemView.setItemHeight(170.0f);
         bookItemView.setItemPropertyProvider((book, propertyNames) -> {
                 Map<String, Object> map = new HashMap<>();
                 map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.CLOSED_BOOK);
