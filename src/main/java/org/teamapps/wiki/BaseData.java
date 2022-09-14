@@ -232,6 +232,12 @@ public class BaseData {
                 .save();
         Book.create().setTitle("Java for Beginners").setDescription("How to programm with Java 17")
                 .save();
+        Book.create().setTitle("Ubuntu 22.04 Deskop").setDescription("Basics of Ubuntu 22.04 Desktop edition")
+                .save();
+        Book.create().setTitle("Ubuntu 16.04 Deskop").setDescription("Basics of Ubuntu 16.04 Desktop edition")
+                .save();
+        Book.create().setTitle("Professional Audio Recording").setDescription("...")
+                .save();
     }
 
     private static int createRandomCount() {
