@@ -112,7 +112,7 @@ public class BaseData {
 
         Chapter chapter1 = Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Getting Started")
+                .setTitle("Getting Started").setDescription("")
                 .save();
 
         Page.create()
@@ -167,7 +167,7 @@ public class BaseData {
         Page.create()
                 .setChapter(chapter1)
                 .setTitle("Developing Courage and Self-Confidence")
-                .setContent("<p>MORE than five hundred thousend men and women, since 1912, have been members ..</p>")
+                .setContent("<p>'MORE than five hundred thousand men and women, since 1912, have been members ..'</p>")
                 .save();
 
         Chapter.create()
@@ -241,8 +241,8 @@ public class BaseData {
     }
 
     private static int createRandomCount() {
-        final int minimumCount = 3;
-        final int maximumCount = 111;
+        final int minimumCount = 9;
+        final int maximumCount = 199;
         return ThreadLocalRandom.current().nextInt(minimumCount, maximumCount);
     }
 
@@ -278,6 +278,7 @@ public class BaseData {
 
         boolean isEndOfListReached;
         StringBuilder combinedString = new StringBuilder();
+
         // set a random start index
         int j = ThreadLocalRandom.current().nextInt(0, phrases.size() - 1);
 
