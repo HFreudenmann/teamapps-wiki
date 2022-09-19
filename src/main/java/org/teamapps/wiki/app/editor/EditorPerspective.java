@@ -613,8 +613,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
                 WikiUtils.getPageLevel(page) == 0, true, false));
         pageTreeModel.setRecords(getPages(selectedChapter.get()));
-
-        pageTree.setModel(pageTreeModel);
         pageTree.setSelectedNode(selectedPage.get());
     }
 
