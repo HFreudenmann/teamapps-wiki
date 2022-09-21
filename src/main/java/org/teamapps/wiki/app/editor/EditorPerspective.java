@@ -235,8 +235,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                                                              "Book Navigation", navigationLayout));
         navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.84f));
         navigationView.getPanel().setMaximizable(false);
-        navigationView.getPanel().setMinWidth(new Length(200.0f));
-        navigationView.getPanel().setMaxWidth(new Length(400.0f));
+        navigationView.setSize(ViewSize.ofAbsoluteWidth(400));
         navigationView.getPanel().setPadding(10);
 
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
