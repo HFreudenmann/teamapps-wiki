@@ -267,12 +267,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void createBookContentView(Perspective perspective) {
 
+        System.out.println("createBookContentView");
+
         contentView = perspective.addView(
                 View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", null));
         contentView.getPanel().setBodyBackgroundColor(Color.BLUE.withAlpha(0.34f));
-        // contentView.getPanel().setMinWidth(new Length(800.0f));
         contentView.getPanel().setPadding(30);
-        // ToDo: What is the intended behaviour of setStretchContent()?
         contentView.getPanel().setStretchContent(false); // Enables vertical scrolling!
 
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
@@ -280,31 +280,36 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButton saveButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes"));
         saveButton.setVisible(false);
         saveButton.onClick.addListener(() -> {
+            System.out.println("saveButton.onClick");
             editingModeEnabled.set(false);
             Page page = selectedPage.get();
             page.setContent(contentEditor.getValue());
             page.save();
             pageManager.unlockPage(page, user);
-            updateContentView(page);
+            // updateContentView(page);
         });
 
         ToolbarButton cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
         cancelButton.setVisible(false);
         cancelButton.onClick.addListener(() -> {
+            System.out.println("cancelButton.onClick");
+
             editingModeEnabled.set(false);
             Page page = selectedPage.get();
             page.clearChanges();
             pageManager.unlockPage(page, user);
-            updateContentView(page);
+            // updateContentView(page);
         });
 
-        ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit"));
+        ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
         editButton.onClick.addListener(() -> {
+            System.out.println("editButton.onClick");
+
             Page page = selectedPage.get();
             editPage(page);
         });
 
-        ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Page Settings"));
+        ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
         pageSettingsButton.onClick.addListener(() -> showPageSettingsWindow(selectedPage.get()));
 
 //        selectedPage.onChanged().addListener(page -> {
@@ -321,6 +326,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //            }
 //        });
         editingModeEnabled.onChanged().addListener(enabled -> {
+            System.out.println("editingModeEnabled.onChanged(");
+
             saveButton.setVisible(enabled);
             cancelButton.setVisible(enabled);
             editButton.setVisible(!enabled);
@@ -432,7 +439,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.save();
             updateContentView();
 //             updateNavigationView();
-            updatePageTree();
+            updatePageTree(); // ToDo : aktualisiert noch nicht Knotennamen im sichtbaren NavigationView
+                              //        (Model-Daten sind aktuell, nicht die Anzeige)
+
             selectedPage.set(page); // update views
             formWindow.close();
         });
@@ -446,6 +455,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void updateContentView(Page page) {
         VerticalLayout contentVerticalLayout = new VerticalLayout();
+
+        System.out.println("updateContentView : page " + ((page != null) ? page.getTitle() : "(empty)"));
 
         contentView.getPanel().setTitle(page.getTitle());
         contentView.focus();
