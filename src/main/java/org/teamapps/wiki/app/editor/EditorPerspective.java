@@ -86,7 +86,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         initializeTwoWayBindables();
 
         emptyPage = Page.create()
-                        .setParent(null).setTitle("-").setDescription("")
+                        .setParent(null).setTitle("").setDescription("")
                         .setChapter(null).setContent("");
 
         selectedBook.set(Book.getAll().stream().findFirst().orElse(null));
@@ -233,7 +233,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         
         navigationView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.COMPASS,
                                                              "Book Navigation", navigationLayout));
-        navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.84f));
+        navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.54f));
         navigationView.getPanel().setMaximizable(false);
         navigationView.setSize(ViewSize.ofAbsoluteWidth(400));
         navigationView.getPanel().setPadding(10);
