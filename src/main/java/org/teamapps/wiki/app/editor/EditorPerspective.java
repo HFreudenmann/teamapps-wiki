@@ -506,75 +506,75 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         contentView.setComponent(contentVerticalLayout);
     }
 
-    private void updateNavigationView() {
-
-        System.out.println("updateNavigationView()");
-
-        VerticalLayout navigationLayout = new VerticalLayout();
-        ComboBox<Book> bookComboBox = new ComboBox<>();
-        bookComboBox.setModel(new ListTreeModel<>(Book.getAll()));
-        bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        bookComboBox.setPropertyProvider((book, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.CLOSED_BOOK);
-            map.put(BaseTemplate.PROPERTY_CAPTION, book.getTitle());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, book.getDescription());
-            return map;
-        });
-        bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
-        bookComboBox.setValue(selectedBook.get());
-        bookComboBox.onValueChanged.addListener(selectedBook::set);
-        navigationLayout.addComponent(bookComboBox);
-
-        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
-        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
-        chapterComboBox.setModel(chapterListTreeModel);
-        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
-            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
-            return map;
-        });
-        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-        chapterComboBox.setValue(selectedChapter.get());
-        chapterComboBox.onValueChanged.addListener(chapter -> {
-            selectedChapter.set(chapter);
-            updateNavigationView();
-        });
-        navigationLayout.addComponent(chapterComboBox);
-
-        ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-        Chapter currentSelectedChapter = selectedChapter.get();
-        System.out.println("currentSelectedChapter = " + currentSelectedChapter.getTitle());
-        pageTreeModel.setRecords(getPages(currentSelectedChapter));
-        Tree<Page> pageTree = new Tree<>(pageTreeModel);
-        pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
-                WikiUtils.getPageLevel(page) == 0, true, false));
-        pageTree.setOpenOnSelection(true);
-        pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        pageTree.setPropertyProvider(getPagePropertyProvider());
-        pageTree.setSelectedNode(selectedPage.get());
-
-        pageTree.onNodeSelected.addListener(selectedPage::set);
-        navigationLayout.addComponent(pageTree);
-
-        selectedBook.onChanged().addListener(book -> {
-            System.out.println("selectedBook.onChanged() : " + book.getTitle());
-            chapterListTreeModel.setRecords(book.getChapters());
-            selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
-
-        });
-        selectedChapter.onChanged().addListener(chapter -> {
-            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
-            chapterComboBox.setValue(chapter);
-            selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
-            pageTreeModel.setRecords(selectedChapter.get().getPages());
-        });
-
-        navigationView.setComponent(navigationLayout);
-    }
+//    private void updateNavigationView() {
+//
+//        System.out.println("updateNavigationView()");
+//
+//        VerticalLayout navigationLayout = new VerticalLayout();
+//        ComboBox<Book> bookComboBox = new ComboBox<>();
+//        bookComboBox.setModel(new ListTreeModel<>(Book.getAll()));
+//        bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+//        bookComboBox.setPropertyProvider((book, propertyNames) -> {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.CLOSED_BOOK);
+//            map.put(BaseTemplate.PROPERTY_CAPTION, book.getTitle());
+//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, book.getDescription());
+//            return map;
+//        });
+//        bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
+//        bookComboBox.setValue(selectedBook.get());
+//        bookComboBox.onValueChanged.addListener(selectedBook::set);
+//        navigationLayout.addComponent(bookComboBox);
+//
+//        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
+//        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
+//        chapterComboBox.setModel(chapterListTreeModel);
+//        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+//        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
+//            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
+//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
+//            return map;
+//        });
+//        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+//        chapterComboBox.setValue(selectedChapter.get());
+//        chapterComboBox.onValueChanged.addListener(chapter -> {
+//            selectedChapter.set(chapter);
+//            updateNavigationView();
+//        });
+//        navigationLayout.addComponent(chapterComboBox);
+//
+//        ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
+//        Chapter currentSelectedChapter = selectedChapter.get();
+//        System.out.println("currentSelectedChapter = " + currentSelectedChapter.getTitle());
+//        pageTreeModel.setRecords(getPages(currentSelectedChapter));
+//        Tree<Page> pageTree = new Tree<>(pageTreeModel);
+//        pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
+//                WikiUtils.getPageLevel(page) == 0, true, false));
+//        pageTree.setOpenOnSelection(true);
+//        pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+//        pageTree.setPropertyProvider(getPagePropertyProvider());
+//        pageTree.setSelectedNode(selectedPage.get());
+//
+//        pageTree.onNodeSelected.addListener(selectedPage::set);
+//        navigationLayout.addComponent(pageTree);
+//
+//        selectedBook.onChanged().addListener(book -> {
+//            System.out.println("selectedBook.onChanged() : " + book.getTitle());
+//            chapterListTreeModel.setRecords(book.getChapters());
+//            selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
+//
+//        });
+//        selectedChapter.onChanged().addListener(chapter -> {
+//            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
+//            chapterComboBox.setValue(chapter);
+//            selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
+//            pageTreeModel.setRecords(selectedChapter.get().getPages());
+//        });
+//
+//        navigationView.setComponent(navigationLayout);
+//    }
 
     private void updateBookComboBox() {
 
