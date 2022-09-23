@@ -208,7 +208,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
         selectedPage.onChanged().addListener(page -> {
             if (Objects.nonNull(page)) {
-                System.out.println("selectedPage.onChanged() : " + page.getTitle());
+                System.out.println("selectedPage.onChanged() : id/title " + page.getId() + "/" + page.getTitle());
 
                 updateContentView(page);
                 contentView.getPanel().setTitle(page.getTitle());
@@ -230,7 +230,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void createBookNavigationView(Perspective perspective) {
         ToolbarButtonGroup navigationButtonGroup;
-        
+
+        System.out.println("createBookNavigationView()");
+
         navigationView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.COMPASS,
                                                              "Book Navigation", navigationLayout));
         navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.54f));
@@ -360,6 +362,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void showPageSettingsWindow(Page page) {
 
+        System.out.println("showPageSettingsWindow : page " + ((page != null) ? page.getTitle() : "(empty)"));
+
         FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
         ToolbarButton saveButton = formWindow.addSaveButton();
         formWindow.addCancelButton();
@@ -425,6 +429,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         formWindow.getFormLayout().addLabelComponent(deleteButton);
         formWindow.addField("Delete page permanently", deleteButton);
         deleteButton.onClicked.addListener(() -> {
+            System.out.println("  PageSettings.deleteButton.onClick");
+
+            // ToDo: Cascading delete; currently children are lifted up one level
             Dialogue okCancel = Dialogue.createOkCancel(EmojiIcon.WARNING, "Permanently delete page \"" + page.getTitle() + "\"?", "Do you really want to delete this page?");
             okCancel.show();
             okCancel.onResult.addListener(isConfirmed -> {
@@ -437,6 +444,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
 
         saveButton.onClick.addListener(() -> {
+            System.out.println("  PageSettings.saveButton.onClick");
+
             page.setTitle(pageTitleField.getValue());
             page.setDescription(pageDescriptionField.getValue());
 
@@ -696,6 +705,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.out.println("reorderPage : page = null");
             return;
         }
+
+        System.out.println("reorderPage : id/title = " + page.getId() + "/" + page.getTitle());
         if (page.getParent() == null) {
             System.out.println("reorderPage : page.Parent = null");
             ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(page.getChapter()));
