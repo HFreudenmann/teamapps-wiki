@@ -61,11 +61,17 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     ListTreeModel<Page> pageModel;
 
     private View contentView;
+    private VerticalLayout contentVerticalLayout;
+    private DisplayField contentTitleField;
+    private DisplayField contentDescriptionField;
+    private RichTextEditor contentEditor;
+
+    private DisplayField contentDisplay;
+    private DisplayField contentBlockField;
     private final TwoWayBindableValue<Book> selectedBook = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
-    private RichTextEditor contentEditor;
     private Page emptyPage;
 
     public EditorPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
@@ -81,6 +87,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         createNavigationLayout();
         createBookNavigationView(perspective);
+
+        createBookContentLayout();
         createBookContentView(perspective);
 
         initializeTwoWayBindables();
@@ -93,7 +101,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null));
         selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
 
-//        updateNavigationView();
+        // updateNavigationView();
+        if (selectedPage.get() == null) {
+            // If the initial loaded book or chapter has no pages, then the content view seems to be in edit mode (wrong background colour).
+            // Displaying an empty page changes to the correct background color.
+            updateContentView(emptyPage);
+        }
     }
 
     private void createNavigationLayout() {
@@ -211,7 +224,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : id/title " + page.getId() + "/" + page.getTitle());
 
                 updateContentView(page);
-                contentView.getPanel().setTitle(page.getTitle());
+//                contentView.getPanel().setTitle(page.getTitle());
                 WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
                 editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
                 contentView.focus();
@@ -219,9 +232,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : (null)");
 
                 updateContentView(emptyPage);
-                contentView.getPanel().setTitle(emptyPage.getTitle());
+//                contentView.getPanel().setTitle(emptyPage.getTitle());
                 editingModeEnabled.set(false);
-                selectedPage.set(null);
+// ???                selectedPage.set(null);
             }
             updatePageTree();
         });
@@ -275,15 +288,82 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
     }
 
+    private void createBookContentLayout() {
+
+        contentVerticalLayout = new VerticalLayout();
+
+        System.out.println("createBookContentLayout");
+
+//        contentView.getPanel().setTitle("");
+//        contentView.focus();
+
+        contentTitleField = new DisplayField();
+//        contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
+        contentTitleField.setShowHtml(true);
+        contentVerticalLayout.addComponent(contentTitleField);
+
+        contentDescriptionField = new DisplayField();
+
+//        String description = page.getDescription();
+//        if (description != null) {
+//            contentDescriptionField.setValue("<p>" + description + "</p>");
+            contentDescriptionField.setShowHtml(true);
+            contentVerticalLayout.addComponent(contentDescriptionField);
+//        }
+
+//        if (editingModeEnabled.get()) {
+            contentEditor = new RichTextEditor();
+//            contentEditor.setValue(page.getContent());
+            contentEditor.setEditingMode(FieldEditingMode.DISABLED);
+            contentVerticalLayout.addComponent(contentEditor);
+//            contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
+            // reset changes: page.clearChanges();
+
+////            page.getContentBlocks().forEach(contentBlock -> {
+////                switch (contentBlock.getContentBlockType()) {
+////                    case RICH_TEXT -> {
+////                        RichTextEditor richTextEditor = new RichTextEditor();
+////                        richTextEditor.setValue(contentBlock.getValue());
+////                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
+////                        richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
+////                        contentVerticalLayout.addComponent(richTextEditor);
+////                    }
+////                }
+////            });
+//        } else {
+
+            contentDisplay = new DisplayField();
+//            contentDisplay.setValue(page.getContent());
+            contentDisplay.setShowHtml(true);
+            contentVerticalLayout.addComponent(contentDisplay);
+
+//            page.getContentBlocks().forEach(contentBlock -> {
+//                switch (contentBlock.getContentBlockType()) {
+//                    case RICH_TEXT -> {
+                        contentBlockField = new DisplayField();
+//                        contentBlockField.setValue(contentBlock.getValue());
+                        contentBlockField.setShowHtml(true);
+                        contentVerticalLayout.addComponent(contentBlockField);
+//                    }
+//                }
+
+//            });
+
+//        }
+
+//        contentView.setComponent(contentVerticalLayout);
+    }
+
     private void createBookContentView(Perspective perspective) {
 
         System.out.println("createBookContentView");
 
         contentView = perspective.addView(
-                View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", null));
+                View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", contentVerticalLayout));
         contentView.getPanel().setBodyBackgroundColor(Color.BLUE.withAlpha(0.34f));
         contentView.getPanel().setPadding(30);
         contentView.getPanel().setStretchContent(false); // Enables vertical scrolling!
+        contentView.getPanel().setTitle("");
 
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
 
@@ -296,7 +376,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.setContent(contentEditor.getValue());
             page.save();
             pageManager.unlockPage(page, user);
-            // updateContentView(page);
+            updateContentView(page);
         });
 
         ToolbarButton cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
@@ -308,7 +388,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             Page page = selectedPage.get();
             page.clearChanges();
             pageManager.unlockPage(page, user);
-            // updateContentView(page);
+            updateContentView(page);
         });
 
         ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
@@ -336,12 +416,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //            }
 //        });
         editingModeEnabled.onChanged().addListener(enabled -> {
-            System.out.println("editingModeEnabled.onChanged(");
+            System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
 
             saveButton.setVisible(enabled);
             cancelButton.setVisible(enabled);
             editButton.setVisible(!enabled);
-            updateContentView(selectedPage.get());
+// ???            updateContentView(selectedPage.get());
         });
     }
 
@@ -360,6 +440,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)){
             editingModeEnabled.set(true); // switch on/off
+            updateContentView(page);
         } else {
             CurrentSessionContext.get().showNotification(
                     EmojiIcon.NO_ENTRY,
@@ -482,7 +563,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void updateContentView(Page page) {
-        VerticalLayout contentVerticalLayout = new VerticalLayout();
+//        VerticalLayout contentVerticalLayout = new VerticalLayout();
 
         if (page == null) {
             System.err.println("updateContentView : page == null");
@@ -492,29 +573,37 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         System.out.println("updateContentView : page " + page.getTitle());
 
         contentView.getPanel().setTitle(page.getTitle());
-        contentView.focus();
+// ???        contentView.focus();
 
-        DisplayField titleField = new DisplayField();
-        titleField.setValue("<h1>" + page.getTitle() + "</h1>");
-        titleField.setShowHtml(true);
-        contentVerticalLayout.addComponent(titleField);
+//        DisplayField titleField = new DisplayField();
+        contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
+//        titleField.setShowHtml(true);
+//        contentVerticalLayout.addComponent(titleField);
 
-        DisplayField descriptionField = new DisplayField();
+//        DisplayField descriptionField = new DisplayField();
 
         String description = page.getDescription();
         if (description != null) {
-            descriptionField.setValue("<p>" + description + "</p>");
-            descriptionField.setShowHtml(true);
-            contentVerticalLayout.addComponent(descriptionField);
+            contentDescriptionField.setValue("<p>" + description + "</p>");
+            contentDescriptionField.setVisible(true);
+//            contentDescriptionField.setShowHtml(true);
+//            contentVerticalLayout.addComponent(descriptionField);
+        } else {
+            contentDescriptionField.setVisible(false);
         }
 
         if (editingModeEnabled.get()) {
-            contentEditor = new RichTextEditor();
+//            contentEditor = new RichTextEditor();
             contentEditor.setValue(page.getContent());
-            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
-            contentVerticalLayout.addComponent(contentEditor);
+//            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
+//            contentVerticalLayout.addComponent(contentEditor);
             contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
+            contentEditor.setVisible(true);
+            contentDisplay.setVisible(false);
+            contentBlockField.setVisible(true);
+
             // reset changes: page.clearChanges();
+            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
 
 //            page.getContentBlocks().forEach(contentBlock -> {
 //                switch (contentBlock.getContentBlockType()) {
@@ -529,25 +618,32 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //            });
         } else {
 
-            DisplayField contentDisplay = new DisplayField();
+//            DisplayField contentDisplay = new DisplayField();
             contentDisplay.setValue(page.getContent());
-            contentDisplay.setShowHtml(true);
-            contentVerticalLayout.addComponent(contentDisplay);
+//            contentDisplay.setShowHtml(true);
+//            contentVerticalLayout.addComponent(contentDisplay);
+            contentEditor.setVisible(false);
+            contentDisplay.setVisible(true);
+            contentBlockField.setVisible(true);
+            contentEditor.setEditingMode(FieldEditingMode.DISABLED);
 
+            StringBuilder contentBlockBuilder = new StringBuilder("");
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
                     case RICH_TEXT -> {
-                        DisplayField contentBlockField = new DisplayField();
-                        contentBlockField.setValue(contentBlock.getValue());
-                        contentBlockField.setShowHtml(true);
-                        contentVerticalLayout.addComponent(contentBlockField);
+//                        DisplayField contentBlockField = new DisplayField();
+                        contentBlockBuilder.append(contentBlock.getValue());
+//                        contentBlockField.setValue(contentBlock.getValue());
+//                        contentBlockField.setShowHtml(true);
+//                        contentVerticalLayout.addComponent(contentBlockField);
                     }
                 }
 
             });
+            contentBlockField.setValue(contentBlockBuilder.toString());
 
         }
-        contentView.setComponent(contentVerticalLayout);
+//        contentView.setComponent(contentVerticalLayout);
     }
 
 //    private void updateNavigationView() {
