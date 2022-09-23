@@ -15,7 +15,12 @@ public class WikiPageManager {
     }
 
     public void unlockPage(Page page, SessionUser editor) {
-        PageStatus pageStatus = getPageStatus(page);
+        PageStatus pageStatus;
+
+        if (page == null || (pageStatus = getPageStatus(page)) == null) {
+            return;
+        }
+
         if (pageStatus.getEditor().equals(editor)) {
             pageStatusHashMap.remove(page);
         }
