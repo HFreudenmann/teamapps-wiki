@@ -210,7 +210,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 chapterComboBox.setValue(chapter);
 
                 pageModel.setRecords(selectedChapter.get().getPages());
-                selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
+                selectedPage.set(getReOrderedPages(chapter).stream().findFirst().orElse(null));
             } else {
                 System.out.println("selectedChapter.onChanged() : (null)");
                 chapterComboBox.setValue(null);
@@ -496,7 +496,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
 
         ComboBox<Page> pageComboBox = new ComboBox<>();
-        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getPages(selectedChapter.get()));
+        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
         pageComboBox.setModel(pageListModel);
         pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageComboBox.setPropertyProvider(getPagePropertyProvider());
@@ -748,11 +748,24 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("updatePageTree()");
 
-        ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-        pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
-                WikiUtils.getPageLevel(page) == 0, true, false));
-        pageTreeModel.setRecords(getPages(selectedChapter.get()));
+        pageModel.setRecords(getReOrderedPages(selectedChapter.get()));
+        logPageList("pageModel", pageModel);
         pageTree.setSelectedNode(selectedPage.get());
+    }
+
+    private void logPageList(String context, ListTreeModel<Page> pageTreeModel)
+    {
+        System.out.println("  Pages of '" + context + "':");
+            for (Page currentPage : pageTreeModel.getRecords()) {
+                if (currentPage != null) {
+                    System.out.println("         Page (id/title) : " + currentPage.getId() + "/" + currentPage.getTitle());
+                } else {
+                    System.out.println("         Page (id/title) : null");
+                }
+            }
+    }
+    private void reRenderPageTree() {
+        pageTree.reRenderIfRendered();
     }
 
     @NotNull
@@ -765,7 +778,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     // List with correct order of children
-    private List<Page> getPages(Chapter chapter) {
+    private List<Page> getReOrderedPages(Chapter chapter) {
         List<Page> pageList = new ArrayList<>();
         if (Objects.nonNull(chapter)) {
             List<Page> topLevelPages = getTopLevelPages(chapter);
@@ -832,7 +845,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("reorderPage : id/title = " + page.getId() + "/" + page.getTitle());
         if (page.getParent() == null) {
-            System.out.println("reorderPage : page.Parent = null");
+            System.out.println("reorderPage : page.Parent == null");
             ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(page.getChapter()));
 
             int pos = 0;
