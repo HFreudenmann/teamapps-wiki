@@ -270,7 +270,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             selectedPage.set(newPage);
 //            updateNavigationView();
 //            updatePageTree();
-            editPage(newPage);
+// ???            editPage(newPage);
             showPageSettingsWindow(newPage);
             // pageTreeModel.setRecords(selectedChapter.get().getPages());
         });
