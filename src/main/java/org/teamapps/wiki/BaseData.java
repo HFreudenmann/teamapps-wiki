@@ -26,12 +26,12 @@ public class BaseData {
 
     private static void createLatinDemoBook() {
         Book demoBook = Book.create()
-                .setTitle("Pieces of wisdom").setDescription("Latin pieces of wisdom from all around the world")
+                .setTitle("Pieces of wisdom").setDescription("Pieces of wisdom in latin from all around the world")
                 .save();
 
         Chapter chapter1 = Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Introduction").setDescription("Introduction into the world of pieces of wisdom")
+                .setTitle("Patience").setDescription("(Contains initially no pages)")
                 .save();
 
         Chapter chapter2 = Chapter.create()
@@ -40,65 +40,66 @@ public class BaseData {
                 .save();
         Page page1 = Page.create()
                 .setChapter(chapter2)
-                .setTitle("Happiness").setDescription("...")
-                .setContent("<h2>Pieces of wisdom concerning happiness</h2>" +
-                        "<h3>... from Europe</h3>" +
-                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
-                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
-                        "<h3>... from Asia</h3>" +
+                .setTitle("Fortune").setDescription("...")
+                .setContent("<h2>Pieces of wisdom concerning fortune and happiness</h2>" +
+                        "<h3>... from Occident</h3>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "<br /></p>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "<br /></p>" +
+                        "<h3>... from Orient</h3>" +
                         "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>"
                 )
                 .save();
         Page.create()
                 .setChapter(chapter2).setParent(page1)
-                .setTitle("Rare phrases I").setDescription("...")
+                .setTitle("").setDescription("(Contains initially an empty string as Title)")
                 .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
         Page.create()
                 .setChapter(chapter2).setParent(page1)
-                .setTitle("Rare phrases II").setDescription("...")
+                .setDescription("(Contains initially no Title)")
                 .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
         Page subpage1_3 = Page.create()
                 .setChapter(chapter2).setParent(page1)
+                .setTitle("Composure").setDescription("...")
+                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
+                .save();
+        Page.create()
+                .setChapter(chapter2).setParent(subpage1_3)
                 .setTitle("Famous phrases").setDescription("...")
                 .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
         Page.create()
                 .setChapter(chapter2).setParent(subpage1_3)
-                .setTitle("Famous phrases a)").setDescription("...")
-                .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
-                .save();
-        Page.create()
-                .setChapter(chapter2).setParent(subpage1_3)
-                .setTitle("Famous phrases b)").setDescription("...")
+                .setTitle("Rare phrases").setDescription("...")
                 .setContent("<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
 
         Page.create()
                 .setChapter(chapter2)
-                .setTitle("Contentment").setDescription("...")
-                .setContent("<h2>Pieces of wisdom concerning contentment</h2>" +
-                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>" +
+                .setTitle("Freedom and wealth").setDescription("...")
+                .setContent("<h2>Pieces of wisdom about freedom and wealth</h2>" +
+                        "<p>" + createRandomLatinPhrases(createRandomCount()) + "<br /></p>" +
                         "<p>" + createRandomLatinPhrases(createRandomCount()) + "</p>")
                 .save();
 
         Chapter chapter3 = Chapter.create()
-                .setTitle("Short phrases")
-                .setDescription("...")
+                .setTitle("Short expressions").setDescription("Chapter with Content and Content Blocks")
                 .setBook(demoBook)
                 .save();
         Page.create()
                 .setChapter(chapter3)
-                .setContent("<p>Carpe diem. Anno Domini. A priori. Curriculum Vitae. Ora et labora. De facto.</p>")
+                .setDescription("A page without title (Title is by default = null)")
+                .setContent("<p>Carpe diem. Anno Domini. A priori. Curriculum Vitae. Ora et labora. De facto. <br /><br />" +
+                            "HINT: Content blocks are not yet editable.<br /></p>")
                 .setContentBlocks(List.of(
                         ContentBlock.create()
                                 .setContentBlockType(ContentBlockType.RICH_TEXT)
-                                .setValue("<h4>Title of content block 1</h4>" +
+                                .setValue("<h3><span style=\"color: #a61fe5;\">Content Block 1</span></h3>" +
                                         "<i>A priori. Curriculum Vitae. Ora et labora. De facto.</i>"),
                         ContentBlock.create()
                                 .setContentBlockType(ContentBlockType.RICH_TEXT)
-                                .setValue("<h5>Title of content block 2</h5>" +
+                                .setValue("<h4><span style=\"color: #a61fe5;\">Content Block 2</span></h4>" +
                                         "<p>Curriculum Vitae. Ora et labora. De facto.</p>")
                 ))
                 .save();
@@ -146,11 +147,11 @@ public class BaseData {
 
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Refining Your Infrastructure")
+                .setTitle("Refining Your Infrastructure (contains no description)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Configuring Your Services")
+                .setTitle("Configuring Your Services (contains no description)")
                 .save();
     }
 
@@ -166,78 +167,75 @@ public class BaseData {
                 .save();
         Page.create()
                 .setChapter(chapter1)
-                .setTitle("Developing Courage and Self-Confidence")
+                .setTitle("Developing Courage and Self-Confidence (contains no description)")
                 .setContent("<p>'MORE than five hundred thousand men and women, since 1912, have been members ..'</p>")
                 .save();
 
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Self-Confidence Through Preparation").setDescription("...")
+                .setTitle("Self-Confidence Through Preparation").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("How Famous Speakers Prepared Their Addresses").setDescription("...")
+                .setTitle("How Famous Speakers Prepared Their Addresses").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("The Improvement of Memory").setDescription("...")
+                .setTitle("The Improvement of Memory").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Essential Elements of Successful Speaking").setDescription("...")
+                .setTitle("Essential Elements of Successful Speaking").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("The Secret of Good Delivery").setDescription("...")
+                .setTitle("The Secret of Good Delivery").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Platform Presence and Personality").setDescription("...")
+                .setTitle("Platform Presence and Personality").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("How to Open a Talk").setDescription("...")
+                .setTitle("How to Open a Talk").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("How to Close a Talk").setDescription("...")
+                .setTitle("How to Close a Talk").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("How to Make Your Meaning Clear").setDescription("...")
+                .setTitle("How to Make Your Meaning Clear").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("How to Interest Your Audience").setDescription("...")
+                .setTitle("How to Interest Your Audience").setDescription("(initially empty chapter)")
                 .save();
         Chapter.create()
                 .setBook(demoBook)
-                .setTitle("Improving Your Diction").setDescription("...")
+                .setTitle("Improving Your Diction").setDescription("(initially empty chapter)")
                 .save();
     }
 
     private static void createEmptyBooks() {
 
-        Book.create().setTitle("Video Editing").setDescription("How to cut, modify and arrange videos")
-                .save();
-        Book.create().setTitle("Film recording").setDescription("How to record professional videos")
-                .save();
-        Book.create().setTitle("Mixer manual for XYZ").setDescription("Manual of audio mixer XYZ")
-                .save();
-        Book.create().setTitle("French Grammar").setDescription("...")
-                .save();
-        Book.create().setTitle("French Dictionary").setDescription("...")
-                .save();
-        Book.create().setTitle("German Dictionary").setDescription("...")
-                .save();
-        Book.create().setTitle("Java for Beginners").setDescription("How to programm with Java 17")
-                .save();
-        Book.create().setTitle("Ubuntu 22.04 Deskop").setDescription("Basics of Ubuntu 22.04 Desktop edition")
-                .save();
-        Book.create().setTitle("Ubuntu 16.04 Deskop").setDescription("Basics of Ubuntu 16.04 Desktop edition")
-                .save();
-        Book.create().setTitle("Professional Audio Recording").setDescription("...")
-                .save();
+        List<String> bookTitles = List.of(
+                "Video Editing", "Film recording", "Mixer manual for XYZ", "Java for Beginners",
+                "Ubuntu 22.04 Deskop", "Ubuntu 16.04 Deskop", "Professional Audio Recording",
+                "French Grammar", "German Dictionary");
+
+        for (String bookTitle : bookTitles) {
+            Book.create().setTitle(bookTitle + ", Vol. 1").setDescription("(initially empty book)")
+                    .save();
+        }
+        for (String bookTitle : bookTitles) {
+            Book.create().setTitle(bookTitle + ", Vol. 2").setDescription("(initially empty book)")
+                    .save();
+        }
+        for (String bookTitle : bookTitles) {
+            Book.create().setTitle(bookTitle + ", Vol. 3").setDescription("(initially empty book)")
+                    .save();
+        }
     }
 
     private static int createRandomCount() {
@@ -251,7 +249,7 @@ public class BaseData {
                 "<b>Faber est suae quisque fortunae.</b>",
                 "Cessante causa cessat effectus.",
                 "Amicus certus in re incerta cernitur.",
-                "Anno Domini.",
+                "<b><i>Summae opes inopia cupiditatum.</i></b>",
                 "Exercitatio artem parat.",
                 "A <b>priori</b>.",
                 "Male parta, male dilabuntur.",
