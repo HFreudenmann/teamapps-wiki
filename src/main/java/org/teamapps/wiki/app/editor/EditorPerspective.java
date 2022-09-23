@@ -245,6 +245,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
         newPageButton.onClick.addListener(() -> {
             // zuvor prüfen: ist eine andere Seite in Bearbeitung --> speichern / verwerfen ?
+
+            System.out.println("newPageButton.onClick()");
+
+            if (selectedChapter.get() == null) {
+                CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Cannot create a page. No chapter is selected!");
+                return;
+            }
+
             Page newPage = createNewPage(selectedChapter.get());
             selectedPage.set(newPage);
 //            updateNavigationView();
@@ -476,7 +484,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void updateContentView(Page page) {
         VerticalLayout contentVerticalLayout = new VerticalLayout();
 
-        System.out.println("updateContentView : page " + ((page != null) ? page.getTitle() : "(empty)"));
+        if (page == null) {
+            System.err.println("updateContentView : page == null");
+            page = emptyPage;
+        }
+
+        System.out.println("updateContentView : page " + page.getTitle());
 
         contentView.getPanel().setTitle(page.getTitle());
         contentView.focus();
@@ -691,18 +704,33 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private Page createNewPage(Chapter chapter) {
-        return Page.create()
-                .setParent(selectedPage.get().getParent())
-                .setTitle("New Page")
-                .setDescription("")
+
+        if (chapter == null) {
+            System.err.println("createNewPage : chapter == null");
+            return null;
+        }
+
+        System.out.println("createNewPage");
+
+        Page newPage = Page.create();
+
+        if (selectedPage.get() == null) {
+            newPage.setParent(null);
+        } else {
+            newPage.setParent(selectedPage.get().getParent());
+        }
+
+        return newPage
                 .setChapter(chapter)
+                .setTitle("New Page").setDescription("")
                 .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
     }
 
     private void reorderPage(Page page, boolean up) {
         if (page == null) {
-            System.out.println("reorderPage : page = null");
+            System.err.println("reorderPage : page == null");
+            CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Page is null. Cannot reorder!");
             return;
         }
 
