@@ -18,7 +18,6 @@ import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.application.view.View;
 import org.teamapps.ux.application.view.ViewSize;
-import org.teamapps.ux.component.absolutelayout.Length;
 import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
 import org.teamapps.ux.component.field.DisplayField;
@@ -272,7 +271,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //            updatePageTree();
 // ???            editPage(newPage);
             showPageSettingsWindow(newPage);
-            // pageTreeModel.setRecords(selectedChapter.get().getPages());
+//            if (selectedChapter.get() != null) {
+//                System.out.println("newPageButton.onClick() : selectedChapter.get().getPages() :");
+//                for (Page currentPage : selectedChapter.get().getPages()) {
+//                    System.out.println("      page (id/title) : " + currentPage.getId() + "/" + currentPage.getTitle());
+//                }
+//            }
+//            pageModel.setRecords(selectedChapter.get().getPages());
+//          updatePageTree();
         });
 
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
@@ -548,8 +554,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.save();
             updateContentView();
 //             updateNavigationView();
-            updatePageTree(); // ToDo : aktualisiert noch nicht Knotennamen im sichtbaren NavigationView
-                              //        (Model-Daten sind aktuell, nicht die Anzeige)
+            updatePageTree();
+            // This is necessary, because updating the model data updates the node name, but it is not displayed
+            // (the old node name is still displayed until the chapter is changed).
+// ???           reRenderPageTree();
 
             selectedPage.set(page); // update views
             formWindow.close();
