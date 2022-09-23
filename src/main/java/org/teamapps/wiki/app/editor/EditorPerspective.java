@@ -720,6 +720,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             }
             System.out.println("  up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
             if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
+                CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Cannot move page beyond the limits!");
                 return;
             }
             int newPos = up ? pos - 1 : pos + 1;
@@ -727,7 +728,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.getChapter().setPages(pageList).save();
         } else {
             Page parent = page.getParent();
-            System.out.println("reorderPage : page = " + page.getTitle());
+
+            System.out.println("reorderPage : page.Parent id/title = " + parent.getId() + "/" + parent.getTitle());
 
             ArrayList<Page> pageList = new ArrayList<>(parent.getChildren());
             int pos = 0;
@@ -739,6 +741,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             }
             System.out.println("  up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
             if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
+                CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Cannot move page beyond the limits!");
                 return;
             }
             int newPos = up ? pos - 1 : pos + 1;
