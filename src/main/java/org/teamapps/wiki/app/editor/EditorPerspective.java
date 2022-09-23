@@ -336,6 +336,17 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void editPage(Page page) {
+
+        if (page == emptyPage) {
+            System.err.println("   edit Page : emptyPage");
+            return;
+        }
+        if (page == null) {
+            System.err.println("   edit Page : page == null");
+            return;
+        }
+        System.out.println("   edit Page : id/title " + page.getId() + "/" + page.getTitle());
+
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)){
             editingModeEnabled.set(true); // switch on/off
