@@ -514,7 +514,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
             contentEditor.setEditingMode(FieldEditingMode.DISABLED);
 
-            StringBuilder contentBlockBuilder = new StringBuilder("");
+            StringBuilder contentBlockBuilder = new StringBuilder();
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
                     case RICH_TEXT -> {
