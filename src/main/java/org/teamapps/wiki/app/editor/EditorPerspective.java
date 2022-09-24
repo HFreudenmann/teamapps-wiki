@@ -376,7 +376,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void showPageSettingsWindow(Page page) {
 
-        System.out.println("showPageSettingsWindow : page " + ((page != null) ? page.getTitle() : "(empty)"));
+        if (Objects.isNull(page)) {
+            CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Page creation failed!");
+            System.err.println("showPageSettingsWindow : page is null!");
+            return;
+        } else {
+            System.out.println("showPageSettingsWindow : page title = " + page.getTitle());
+        }
 
         FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
         ToolbarButton saveButton = formWindow.addSaveButton();
