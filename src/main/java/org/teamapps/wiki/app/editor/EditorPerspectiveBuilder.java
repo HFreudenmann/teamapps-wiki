@@ -4,7 +4,6 @@ import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractPerspectiveBuilder;
 import org.teamapps.application.api.application.perspective.ApplicationPerspective;
 import org.teamapps.application.api.privilege.ApplicationPrivilegeProvider;
-import org.teamapps.application.api.theme.ApplicationIcons;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.icon.emoji.EmojiIcon;
 

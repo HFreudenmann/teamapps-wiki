@@ -35,6 +35,7 @@ import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
+import org.teamapps.ux.session.SessionContext;
 import org.teamapps.wiki.app.WikiApplicationBuilder;
 import org.teamapps.wiki.app.WikiPageManager;
 import org.teamapps.wiki.app.WikiUtils;
@@ -100,7 +101,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null));
         selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
 
-        // updateNavigationView();
         if (selectedPage.get() == null) {
             // If the initial loaded book or chapter has no pages, then the content view seems to be in edit mode (wrong background colour).
             // Displaying an empty page changes to the correct background color.
@@ -132,11 +132,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             return map;
         });
         bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
-//        bookComboBox.setValue(selectedBook.get());
         bookComboBox.onValueChanged.addListener(selectedBook::set);
 
         chapterComboBox = new ComboBox<>();
-//            ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
         chapterComboBox.setModel(chapterModel);
         chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
@@ -147,44 +145,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             return map;
         });
         chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-//            chapterComboBox.setValue(selectedChapter.get());
         chapterComboBox.onValueChanged.addListener(chapter -> {
             selectedChapter.set(chapter);
-// ToDo update only chapters and pages - but not books
-//          updateNavigationView();
         });
 
-//        pageModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-//            Chapter currentSelectedChapter = selectedChapter.get();
-//            System.out.println("currentSelectedChapter = " + currentSelectedChapter.getTitle());
-//            pageTreeModel.setRecords(getPages(currentSelectedChapter));
-//        pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
-//                WikiUtils.getPageLevel(page) == 0, true, false));
         pageTree = new Tree<>(pageModel);
         pageTree.setOpenOnSelection(true);
         pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageTree.setPropertyProvider(getPagePropertyProvider());
-//            pageTree.setSelectedNode(selectedPage.get());
         pageTree.onNodeSelected.addListener(selectedPage::set);
 
         navigationLayout.addComponent(bookComboBox);
         navigationLayout.addComponent(chapterComboBox);
         navigationLayout.addComponent(pageTree);
-
-//        selectedBook.onChanged().addListener(book -> {
-//            System.out.println("selectedBook.onChanged() : " + book.getTitle());
-//                chapterListTreeModel.setRecords(book.getChapters());
-//                selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
-//
-//        });
-//        selectedChapter.onChanged().addListener(chapter -> {
-//            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
-//                chapterComboBox.setValue(chapter);
-//                selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
-//                pageTreeModel.setRecords(selectedChapter.get().getPages());
-//        });
-
-        //        navigationView.setComponent(navigationLayout);
     }
 
     private void initializeTwoWayBindables() {
@@ -223,7 +196,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : id/title " + page.getId() + "/" + page.getTitle());
 
                 updateContentView(page);
-//                contentView.getPanel().setTitle(page.getTitle());
                 WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
                 editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
                 contentView.focus();
@@ -231,13 +203,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : (null)");
 
                 updateContentView(emptyPage);
-//                contentView.getPanel().setTitle(emptyPage.getTitle());
                 editingModeEnabled.set(false);
-// ???                selectedPage.set(null);
             }
             updatePageTree();
         });
-
     }
 
     private void createBookNavigationView(Perspective perspective) {
@@ -256,7 +225,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButton newPageButton = navigationButtonGroup.addButton(
                 ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
         newPageButton.onClick.addListener(() -> {
-            // zuvor prüfen: ist eine andere Seite in Bearbeitung --> speichern / verwerfen ?
+            // ToDo zuvor prüfen: ist eine andere Seite in Bearbeitung --> speichern / verwerfen ?
 
             System.out.println("newPageButton.onClick()");
 
@@ -267,18 +236,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
             Page newPage = createNewPage(selectedChapter.get());
             selectedPage.set(newPage);
-//            updateNavigationView();
-//            updatePageTree();
-// ???            editPage(newPage);
+
             showPageSettingsWindow(newPage);
-//            if (selectedChapter.get() != null) {
-//                System.out.println("newPageButton.onClick() : selectedChapter.get().getPages() :");
-//                for (Page currentPage : selectedChapter.get().getPages()) {
-//                    System.out.println("      page (id/title) : " + currentPage.getId() + "/" + currentPage.getTitle());
-//                }
-//            }
-//            pageModel.setRecords(selectedChapter.get().getPages());
-//          updatePageTree();
         });
 
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
@@ -300,31 +259,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("createBookContentLayout");
 
-//        contentView.getPanel().setTitle("");
-//        contentView.focus();
-
         contentTitleField = new DisplayField();
-//        contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
         contentTitleField.setShowHtml(true);
         contentVerticalLayout.addComponent(contentTitleField);
 
         contentDescriptionField = new DisplayField();
+        contentDescriptionField.setShowHtml(true);
+        contentVerticalLayout.addComponent(contentDescriptionField);
 
-//        String description = page.getDescription();
-//        if (description != null) {
-//            contentDescriptionField.setValue("<p>" + description + "</p>");
-            contentDescriptionField.setShowHtml(true);
-            contentVerticalLayout.addComponent(contentDescriptionField);
-//        }
+        contentEditor = new RichTextEditor();
+        contentEditor.setEditingMode(FieldEditingMode.DISABLED);
+        contentVerticalLayout.addComponent(contentEditor);
 
-//        if (editingModeEnabled.get()) {
-            contentEditor = new RichTextEditor();
-//            contentEditor.setValue(page.getContent());
-            contentEditor.setEditingMode(FieldEditingMode.DISABLED);
-            contentVerticalLayout.addComponent(contentEditor);
-//            contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
-            // reset changes: page.clearChanges();
-
+// ToDo Works this code for Content Block editing?
 ////            page.getContentBlocks().forEach(contentBlock -> {
 ////                switch (contentBlock.getContentBlockType()) {
 ////                    case RICH_TEXT -> {
@@ -336,28 +283,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 ////                    }
 ////                }
 ////            });
-//        } else {
 
-            contentDisplay = new DisplayField();
-//            contentDisplay.setValue(page.getContent());
-            contentDisplay.setShowHtml(true);
-            contentVerticalLayout.addComponent(contentDisplay);
+        contentDisplay = new DisplayField();
+        contentDisplay.setShowHtml(true);
+        contentVerticalLayout.addComponent(contentDisplay);
 
-//            page.getContentBlocks().forEach(contentBlock -> {
-//                switch (contentBlock.getContentBlockType()) {
-//                    case RICH_TEXT -> {
-                        contentBlockField = new DisplayField();
-//                        contentBlockField.setValue(contentBlock.getValue());
-                        contentBlockField.setShowHtml(true);
-                        contentVerticalLayout.addComponent(contentBlockField);
-//                    }
-//                }
-
-//            });
-
-//        }
-
-//        contentView.setComponent(contentVerticalLayout);
+        contentBlockField = new DisplayField();
+        contentBlockField.setShowHtml(true);
+        contentVerticalLayout.addComponent(contentBlockField);
     }
 
     private void createBookContentView(Perspective perspective) {
@@ -408,26 +341,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
         pageSettingsButton.onClick.addListener(() -> showPageSettingsWindow(selectedPage.get()));
 
-//        selectedPage.onChanged().addListener(page -> {
-//            if (selectedPage.get() != null) {
-//                updateContentView(selectedPage.get());
-//                contentView.getPanel().setTitle(page.getTitle());
-//                WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
-//                editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
-//                contentView.focus();
-//            } else {
-//                selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
-////                updateNavigationView();
-//                updatePageTree();
-//            }
-//        });
         editingModeEnabled.onChanged().addListener(enabled -> {
             System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
 
             saveButton.setVisible(enabled);
             cancelButton.setVisible(enabled);
             editButton.setVisible(!enabled);
-// ???            updateContentView(selectedPage.get());
         });
     }
 
@@ -487,20 +406,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
         emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
 
-//        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
-//        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
-//        chapterComboBox.setModel(chapterListTreeModel);
-//        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-//        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
-//            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
-//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
-//            return map;
-//        });
-//        chapterComboBox.setValue(page.getChapter());
-//        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-
         ComboBox<Page> pageComboBox = new ComboBox<>();
         ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
         pageComboBox.setModel(pageListModel);
@@ -510,7 +415,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageComboBox.setValue(page.getParent());
         pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false));
         pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-
 
         formWindow.addSection();
         formWindow.addField("Page Icon", emojiIconComboBox);
@@ -553,11 +457,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
             updateContentView();
-//             updateNavigationView();
             updatePageTree();
-            // This is necessary, because updating the model data updates the node name, but it is not displayed
-            // (the old node name is still displayed until the chapter is changed).
-// ???           reRenderPageTree();
 
             selectedPage.set(page); // update views
             formWindow.close();
@@ -571,7 +471,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void updateContentView(Page page) {
-//        VerticalLayout contentVerticalLayout = new VerticalLayout();
 
         if (page == null) {
             System.err.println("updateContentView : page == null");
@@ -581,69 +480,39 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         System.out.println("updateContentView : page " + page.getTitle());
 
         contentView.getPanel().setTitle(page.getTitle());
-// ???        contentView.focus();
-
-//        DisplayField titleField = new DisplayField();
         contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
-//        titleField.setShowHtml(true);
-//        contentVerticalLayout.addComponent(titleField);
-
-//        DisplayField descriptionField = new DisplayField();
 
         String description = page.getDescription();
         if (description != null) {
             contentDescriptionField.setValue("<p>" + description + "</p>");
             contentDescriptionField.setVisible(true);
-//            contentDescriptionField.setShowHtml(true);
-//            contentVerticalLayout.addComponent(descriptionField);
         } else {
             contentDescriptionField.setVisible(false);
         }
 
         if (editingModeEnabled.get()) {
-//            contentEditor = new RichTextEditor();
             contentEditor.setValue(page.getContent());
-//            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
-//            contentVerticalLayout.addComponent(contentEditor);
             contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
+
             contentEditor.setVisible(true);
             contentDisplay.setVisible(false);
             contentBlockField.setVisible(true);
 
-            // reset changes: page.clearChanges();
             contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
-
-//            page.getContentBlocks().forEach(contentBlock -> {
-//                switch (contentBlock.getContentBlockType()) {
-//                    case RICH_TEXT -> {
-//                        RichTextEditor richTextEditor = new RichTextEditor();
-//                        richTextEditor.setValue(contentBlock.getValue());
-//                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
-//                        richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
-//                        contentVerticalLayout.addComponent(richTextEditor);
-//                    }
-//                }
-//            });
         } else {
-
-//            DisplayField contentDisplay = new DisplayField();
             contentDisplay.setValue(page.getContent());
-//            contentDisplay.setShowHtml(true);
-//            contentVerticalLayout.addComponent(contentDisplay);
+
             contentEditor.setVisible(false);
             contentDisplay.setVisible(true);
             contentBlockField.setVisible(true);
+
             contentEditor.setEditingMode(FieldEditingMode.DISABLED);
 
             StringBuilder contentBlockBuilder = new StringBuilder("");
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
                     case RICH_TEXT -> {
-//                        DisplayField contentBlockField = new DisplayField();
                         contentBlockBuilder.append(contentBlock.getValue());
-//                        contentBlockField.setValue(contentBlock.getValue());
-//                        contentBlockField.setShowHtml(true);
-//                        contentVerticalLayout.addComponent(contentBlockField);
                     }
                 }
 
@@ -651,78 +520,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             contentBlockField.setValue(contentBlockBuilder.toString());
 
         }
-//        contentView.setComponent(contentVerticalLayout);
     }
 
-//    private void updateNavigationView() {
-//
-//        System.out.println("updateNavigationView()");
-//
-//        VerticalLayout navigationLayout = new VerticalLayout();
-//        ComboBox<Book> bookComboBox = new ComboBox<>();
-//        bookComboBox.setModel(new ListTreeModel<>(Book.getAll()));
-//        bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-//        bookComboBox.setPropertyProvider((book, propertyNames) -> {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.CLOSED_BOOK);
-//            map.put(BaseTemplate.PROPERTY_CAPTION, book.getTitle());
-//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, book.getDescription());
-//            return map;
-//        });
-//        bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
-//        bookComboBox.setValue(selectedBook.get());
-//        bookComboBox.onValueChanged.addListener(selectedBook::set);
-//        navigationLayout.addComponent(bookComboBox);
-//
-//        ComboBox<Chapter> chapterComboBox = new ComboBox<>();
-//        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
-//        chapterComboBox.setModel(chapterListTreeModel);
-//        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-//        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
-//            Map<String, Object> map = new HashMap<>();
-//            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
-//            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
-//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
-//            return map;
-//        });
-//        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-//        chapterComboBox.setValue(selectedChapter.get());
-//        chapterComboBox.onValueChanged.addListener(chapter -> {
-//            selectedChapter.set(chapter);
-//            updateNavigationView();
-//        });
-//        navigationLayout.addComponent(chapterComboBox);
-//
-//        ListTreeModel<Page> pageTreeModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-//        Chapter currentSelectedChapter = selectedChapter.get();
-//        System.out.println("currentSelectedChapter = " + currentSelectedChapter.getTitle());
-//        pageTreeModel.setRecords(getPages(currentSelectedChapter));
-//        Tree<Page> pageTree = new Tree<>(pageTreeModel);
-//        pageTreeModel.setTreeNodeInfoFunction(page -> new TreeNodeInfoImpl<>(page.getParent(),
-//                WikiUtils.getPageLevel(page) == 0, true, false));
-//        pageTree.setOpenOnSelection(true);
-//        pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-//        pageTree.setPropertyProvider(getPagePropertyProvider());
-//        pageTree.setSelectedNode(selectedPage.get());
-//
-//        pageTree.onNodeSelected.addListener(selectedPage::set);
-//        navigationLayout.addComponent(pageTree);
-//
-//        selectedBook.onChanged().addListener(book -> {
-//            System.out.println("selectedBook.onChanged() : " + book.getTitle());
-//            chapterListTreeModel.setRecords(book.getChapters());
-//            selectedChapter.set(book.getChapters().stream().findFirst().orElse(null));
-//
-//        });
-//        selectedChapter.onChanged().addListener(chapter -> {
-//            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
-//            chapterComboBox.setValue(chapter);
-//            selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
-//            pageTreeModel.setRecords(selectedChapter.get().getPages());
-//        });
-//
-//        navigationView.setComponent(navigationLayout);
-//    }
 
     private void updateBookComboBox() {
 
@@ -739,17 +538,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
         chapterComboBox.setModel(chapterListTreeModel);
         chapterComboBox.setValue(selectedChapter.get());
-//        chapterComboBox.onValueChanged.addListener(chapter -> {
-//            selectedChapter.set(chapter);
-//            updateNavigationView();
-//        });
-
-//        selectedChapter.onChanged().addListener(chapter -> {
-//            System.out.println("selectedChapter.onChanged() : " + chapter.getTitle());
-//            chapterComboBox.setValue(chapter);
-//            selectedPage.set(getPages(chapter).stream().findFirst().orElse(null));
-//            pageTreeModel.setRecords(selectedChapter.get().getPages());
-//        });
     }
 
     private void updatePageTree() {
@@ -771,9 +559,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                     System.out.println("         Page (id/title) : null");
                 }
             }
-    }
-    private void reRenderPageTree() {
-        pageTree.reRenderIfRendered();
     }
 
     @NotNull
@@ -893,8 +678,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             Collections.swap(pageList, pos, newPos);
             parent.setChildren(pageList).save();
         }
-        // PageTreeModel.setRecords(getPages(selectedPage.get()));
-//        updateNavigationView();
         updatePageTree();
     }
 
