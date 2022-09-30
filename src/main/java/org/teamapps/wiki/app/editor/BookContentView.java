@@ -13,9 +13,8 @@ import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
 import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.function.Supplier;
-import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class BookContentView {
 
@@ -44,6 +43,7 @@ public class BookContentView {
 
     public void setEditMode(boolean isEditModeEnabled) {
 
+        System.out.println("   BookContentView.setEditMode : " + isEditModeEnabled);
         this.isEditModeEnabled = isEditModeEnabled;
 
         setToolbarButtonEnabledState();
@@ -59,7 +59,7 @@ public class BookContentView {
             return;
         }
 
-        System.out.println("updateContentView : page " + page.getTitle());
+        System.out.println("   BookContentView.updateContentView : page " + page.getTitle());
 
         contentView.getPanel().setTitle(page.getTitle());
         contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
@@ -72,7 +72,6 @@ public class BookContentView {
             contentDescriptionField.setVisible(false);
         }
 
-//        if (editingModeEnabled.get()) {
         if (isEditModeEnabled) {
             contentEditor.setValue(page.getContent());
             contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
@@ -159,11 +158,7 @@ public class BookContentView {
         saveButton.setVisible(false);
         saveButton.onClick.addListener(() -> {
             System.out.println("saveButton.onClick");
-//            editingModeEnabled.set(false);
-//            Page page = selectedPage.get();
-//            page.setContent(contentEditor.getValue());
-//            page.save();
-//            pageManager.unlockPage(page, user);
+
             Page savedPage = onPageSaved.apply(contentEditor.getValue());
             updateContentView(savedPage);
         });
@@ -173,34 +168,15 @@ public class BookContentView {
         cancelButton.onClick.addListener(() -> {
             System.out.println("cancelButton.onClick");
 
-//            editingModeEnabled.set(false);
-//            Page page = selectedPage.get();
-//            page.clearChanges();
-//            pageManager.unlockPage(page, user);
             Page originalPage = onPageEditCanceled.get();
             updateContentView(originalPage);
         });
 
         editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
-//        editButton.onClick.addListener(() -> {
-//            System.out.println("editButton.onClick");
-//
-//            Page page = selectedPage.get();
-//            editPage(page);
-//        });
         editButton.onClick.addListener(onPageEditClicked);
 
         ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
-//        pageSettingsButton.onClick.addListener(() -> showPageSettingsWindow(selectedPage.get()));
         pageSettingsButton.onClick.addListener(onEditPageSettingsClicked);
-
-//        editingModeEnabled.onChanged().addListener(enabled -> {
-//            System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
-//
-//            saveButton.setVisible(enabled);
-//            cancelButton.setVisible(enabled);
-//            editButton.setVisible(!enabled);
-//        });
     }
 
 

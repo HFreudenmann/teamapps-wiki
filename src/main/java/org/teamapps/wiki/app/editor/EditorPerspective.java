@@ -13,21 +13,14 @@ import org.teamapps.databinding.MutableValue;
 import org.teamapps.databinding.TwoWayBindableValue;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
-import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
-import org.teamapps.ux.application.view.View;
 import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
-import org.teamapps.ux.component.field.DisplayField;
-import org.teamapps.ux.component.field.FieldEditingMode;
 import org.teamapps.ux.component.field.TextField;
 import org.teamapps.ux.component.field.combobox.ComboBox;
-import org.teamapps.ux.component.field.richtext.RichTextEditor;
-import org.teamapps.ux.component.flexcontainer.VerticalLayout;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
-import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
@@ -48,21 +41,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final SessionUser user;
 
     private BookNavigationView bookNavigationView;
-
     private BookContentView bookContentView;
 
     ListTreeModel<Book> bookModel;
     ListTreeModel<Chapter> chapterModel;
     ListTreeModel<Page> pageModel;
 
-//    private View contentView;
-//    private VerticalLayout contentVerticalLayout;
-//    private DisplayField contentTitleField;
-//    private DisplayField contentDescriptionField;
-//    private RichTextEditor contentEditor;
-//
-//    private DisplayField contentDisplay;
-//    private DisplayField contentBlockField;
 
     private final TwoWayBindableValue<Book> selectedBook = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
@@ -70,7 +54,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
     private Page emptyPage;
 
+
     public EditorPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
+
         super(applicationInstanceData, perspectiveInfoBadgeValue);
         PerspectiveSessionData perspectiveSessionData = (PerspectiveSessionData) getApplicationInstanceData();
         pageManager = WikiApplicationBuilder.PAGE_MANAGER;
@@ -79,6 +65,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void createUi() {
+
         Perspective perspective = getPerspective();
 
         createListTreeModel();
@@ -87,8 +74,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                                   bookModel, chapterModel, pageModel,
                                   selectedBook::set, selectedChapter::set, selectedPage::set,
                                   this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked);
-//        createBookContentLayout();
-//        createBookContentView(perspective);
         bookContentView  = new BookContentView();
         bookContentView.create(perspective,
                                this::onPageSaved, this::onPageEditCanceled, this::onPageEditClicked, this::onEditPageSettingsClicked);
@@ -112,8 +97,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
 
     private void createListTreeModel() {
-
-        System.out.println("createListTreeModel()");
 
         bookModel = new ListTreeModel<>(Book.getAll());
         chapterModel = new ListTreeModel<Chapter>(Collections.EMPTY_LIST);
@@ -161,7 +144,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 updateContentView(page);
                 WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
                 editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
-//                contentView.focus();
                 bookContentView.setFocus();
             } else {
                 System.out.println("selectedPage.onChanged() : (null)");
@@ -175,14 +157,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         editingModeEnabled.onChanged().addListener(enabled -> {
             System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
 
-//            saveButton.setVisible(enabled);
-//            cancelButton.setVisible(enabled);
-//            editButton.setVisible(!enabled);
             bookContentView.setEditMode(enabled);
         });
 
     }
-
 
     private void onNewPageButtonClicked() {
 
@@ -203,141 +181,48 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void onMovePageUpButtonClicked() {
+
         System.out.println("onMovePageUpButtonClicked");
         reorderPage(selectedPage.get(), true);
     }
     private void onMovePageDownButtonClicked() {
+
         System.out.println("onMovePageDownButtonClicked");
         reorderPage(selectedPage.get(), false);
     }
 
-//    private void createBookContentLayout() {
-//
-//        contentVerticalLayout = new VerticalLayout();
-//
-//        System.out.println("createBookContentLayout");
-//
-//        contentTitleField = new DisplayField();
-//        contentTitleField.setShowHtml(true);
-//        contentVerticalLayout.addComponent(contentTitleField);
-//
-//        contentDescriptionField = new DisplayField();
-//        contentDescriptionField.setShowHtml(true);
-//        contentVerticalLayout.addComponent(contentDescriptionField);
-//
-//        contentEditor = new RichTextEditor();
-//        contentEditor.setEditingMode(FieldEditingMode.DISABLED);
-//        contentVerticalLayout.addComponent(contentEditor);
-//
-//// ToDo Works this code for Content Block editing?
-//////            page.getContentBlocks().forEach(contentBlock -> {
-//////                switch (contentBlock.getContentBlockType()) {
-//////                    case RICH_TEXT -> {
-//////                        RichTextEditor richTextEditor = new RichTextEditor();
-//////                        richTextEditor.setValue(contentBlock.getValue());
-//////                        richTextEditor.setEditingMode(FieldEditingMode.EDITABLE);
-//////                        richTextEditor.setDebuggingId(String.valueOf(contentBlock.getId()));
-//////                        contentVerticalLayout.addComponent(richTextEditor);
-//////                    }
-//////                }
-//////            });
-//
-//        contentDisplay = new DisplayField();
-//        contentDisplay.setShowHtml(true);
-//        contentVerticalLayout.addComponent(contentDisplay);
-//
-//        contentBlockField = new DisplayField();
-//        contentBlockField.setShowHtml(true);
-//        contentVerticalLayout.addComponent(contentBlockField);
-//    }
-
-//    private void createBookContentView(Perspective perspective) {
-//
-//        System.out.println("createBookContentView");
-//
-//        contentView = perspective.addView(
-//                View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", contentVerticalLayout));
-//        contentView.getPanel().setBodyBackgroundColor(Color.BLUE.withAlpha(0.34f));
-//        contentView.getPanel().setPadding(30);
-//        contentView.getPanel().setStretchContent(false); // Enables vertical scrolling!
-//        contentView.getPanel().setTitle("");
-//
-//        ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
-//
-//        ToolbarButton saveButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes"));
-//        saveButton.setVisible(false);
-//        saveButton.onClick.addListener(() -> {
-//            System.out.println("saveButton.onClick");
-//            editingModeEnabled.set(false);
-//            Page page = selectedPage.get();
-//            page.setContent(contentEditor.getValue());
-//            page.save();
-//            pageManager.unlockPage(page, user);
-//            updateContentView(page);
-//        });
-//
-//        ToolbarButton cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
-//        cancelButton.setVisible(false);
-//        cancelButton.onClick.addListener(() -> {
-//            System.out.println("cancelButton.onClick");
-//
-//            editingModeEnabled.set(false);
-//            Page page = selectedPage.get();
-//            page.clearChanges();
-//            pageManager.unlockPage(page, user);
-//            updateContentView(page);
-//        });
-//
-//        ToolbarButton editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
-//        editButton.onClick.addListener(() -> {
-//            System.out.println("editButton.onClick");
-//
-//            Page page = selectedPage.get();
-//            editPage(page);
-//        });
-//
-//        ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
-//        pageSettingsButton.onClick.addListener(() -> showPageSettingsWindow(selectedPage.get()));
-//
-//        editingModeEnabled.onChanged().addListener(enabled -> {
-//            System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
-//
-////            saveButton.setVisible(enabled);
-////            cancelButton.setVisible(enabled);
-////            editButton.setVisible(!enabled);
-//            bookContentView.setEditMode(enabled);
-//        });
-//    }
 
     private Page onPageSaved(String pageContent) {
+
         System.out.println("onPageSaved");
         editingModeEnabled.set(false);
         Page page = selectedPage.get();
         page.setContent(pageContent);
         page.save();
         pageManager.unlockPage(page, user);
-//        updateContentView(page);
+
         return page;
     }
 
     private Page onPageEditCanceled() {
-        System.out.println("onPageEditCanceled");
 
+        System.out.println("onPageEditCanceled");
         editingModeEnabled.set(false);
         Page page = selectedPage.get();
         page.clearChanges();
         pageManager.unlockPage(page, user);
-//        updateContentView(page);
+
         return page;
     }
 
     private void onPageEditClicked() {
-        System.out.println("editButton.onClick");
 
+        System.out.println("editButton.onClick");
         editPage(selectedPage.get());
     }
 
     private void onEditPageSettingsClicked() {
+
         showPageSettingsWindow(selectedPage.get());
     }
 
@@ -352,7 +237,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.err.println("   edit Page : page == null");
             return;
         }
-        System.out.println("   edit Page : id/title " + page.getId() + "/" + page.getTitle());
+        System.out.println("editPage : id/title " + page.getId() + "/" + page.getTitle());
 
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)){
@@ -465,6 +350,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void updateContentView() {
+
         updateContentView(selectedPage.get());
     }
 
@@ -478,62 +364,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         System.out.println("updateContentView : page " + page.getTitle());
 
         bookContentView.updateContentView(page);
-
-//        contentView.getPanel().setTitle(page.getTitle());
-//        contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
-//
-//        String description = page.getDescription();
-//        if (description != null) {
-//            contentDescriptionField.setValue("<p>" + description + "</p>");
-//            contentDescriptionField.setVisible(true);
-//        } else {
-//            contentDescriptionField.setVisible(false);
-//        }
-
-//        if (editingModeEnabled.get()) {
-//            contentEditor.setValue(page.getContent());
-//            contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
-//
-//            contentEditor.setVisible(true);
-//            contentDisplay.setVisible(false);
-//            contentBlockField.setVisible(true);
-//
-//            contentEditor.setEditingMode(FieldEditingMode.EDITABLE);
-//        } else {
-//            contentDisplay.setValue(page.getContent());
-//
-//            contentEditor.setVisible(false);
-//            contentDisplay.setVisible(true);
-//            contentBlockField.setVisible(true);
-//
-//            contentEditor.setEditingMode(FieldEditingMode.DISABLED);
-//
-//            StringBuilder contentBlockBuilder = new StringBuilder();
-//            page.getContentBlocks().forEach(contentBlock -> {
-//                switch (contentBlock.getContentBlockType()) {
-//                    case RICH_TEXT -> {
-//                        contentBlockBuilder.append(contentBlock.getValue());
-//                    }
-//                }
-//
-//            });
-//            contentBlockField.setValue(contentBlockBuilder.toString());
-//
-//        }
     }
 
     private void updatePageTree() {
 
         System.out.println("updatePageTree()");
-
         pageModel.setRecords(getReOrderedPages(selectedChapter.get()));
-        logPageList("pageModel", pageModel);
+        logPageList(pageModel);
         bookNavigationView.setSelectedPage(selectedPage.get());
     }
 
-    private void logPageList(String context, ListTreeModel<Page> pageTreeModel)
+    private void logPageList(ListTreeModel<Page> pageTreeModel)
     {
-        System.out.println("  Pages of '" + context + "':");
+        System.out.println("  Page list :");
             for (Page currentPage : pageTreeModel.getRecords()) {
                 if (currentPage != null) {
                     System.out.println("         Page (id/title) : " + currentPage.getId() + "/" + currentPage.getTitle());
@@ -545,6 +388,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     @NotNull
     private List<Page> getTopLevelPages(Chapter chapter) {
+
         if (Objects.nonNull(chapter)) {
             return chapter.getPages().stream().filter(page -> page.getParent() == null).collect(Collectors.toList());
         } else {
@@ -554,6 +398,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     // List with correct order of children
     private List<Page> getReOrderedPages(Chapter chapter) {
+
         List<Page> pageList = new ArrayList<>();
         if (Objects.nonNull(chapter)) {
             List<Page> topLevelPages = getTopLevelPages(chapter);
@@ -562,6 +407,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         return pageList;
     }
     private void addPageNodes(List<Page> nodes, List<Page> pageNodes) {
+
         for (Page node : nodes) {
             pageNodes.add(node);
             addPageNodes(node.getChildren(), pageNodes);
@@ -570,6 +416,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     @NotNull
     private PropertyProvider<Page> getPagePropertyProvider() {
+
         return (page, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
 
@@ -612,6 +459,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void reorderPage(Page page, boolean up) {
+
         if (page == null) {
             System.err.println("reorderPage : page == null");
             CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Page is null. Cannot reorder!");
