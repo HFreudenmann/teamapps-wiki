@@ -26,10 +26,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/* This class contains the GUI elements of the book navigation view. It is structured like this:
+
+    view
+     |--- Panel    (is an internal component of each View)
+     |--- buttonGroup
+     |        |--- newPageButton
+     |        |--- upButton
+     |        |--- downButton
+     |
+     |-- layout
+            |--- bookComboBox
+            |--- chapterComboBox
+            |--- pageTree
+ */
 public class BookNavigationView {
 
-    private View navigationView;
-    private VerticalLayout navigationLayout;
+    private View view;
+    private VerticalLayout layout;
 
     private ComboBox<Book> bookComboBox;
     private ComboBox<Chapter> chapterComboBox;
@@ -49,10 +63,10 @@ public class BookNavigationView {
                        Runnable onMovePageDownClicked) {
         createNavigationLayout(bookModel, chapterModel, pageModel,
                                onSelectedBookChangedListener, onSelectedChapterChangedListener, onSelectedPageChangedListener);
-        createBookNavigationView(perspective,
-                                 onNewPageClickedListener, onMovePageUpClicked, onMovePageDownClicked);
+        createNavigationView(perspective,
+                             onNewPageClickedListener, onMovePageUpClicked, onMovePageDownClicked);
 
-        return navigationView;
+        return view;
     }
 
     public void setSelectedBook(Book book) {
@@ -74,9 +88,7 @@ public class BookNavigationView {
                                         Consumer<Book> onSelectedBookChangedListener,
                                         Consumer<Chapter> onSelectedChapterChangedListener,
                                         Consumer<Page> onSelectedPageChangedListener) {
-        System.out.println("createNavigationLayout()");
-
-        navigationLayout = new VerticalLayout();
+        layout = new VerticalLayout();
 
         bookComboBox = new ComboBox<>();
         bookComboBox.setModel(bookModel);
@@ -98,35 +110,33 @@ public class BookNavigationView {
         pageTree.setPropertyProvider(getPagePropertyProvider());
         pageTree.onNodeSelected.addListener(onSelectedPageChangedListener);
 
-        navigationLayout.addComponent(bookComboBox);
-        navigationLayout.addComponent(chapterComboBox);
-        navigationLayout.addComponent(pageTree);
+        layout.addComponent(bookComboBox);
+        layout.addComponent(chapterComboBox);
+        layout.addComponent(pageTree);
     }
 
-    private void createBookNavigationView(Perspective perspective,
-                                          Runnable onNewPageClickedListener,
-                                          Runnable onMovePageUpClicked,
-                                          Runnable onMovePageDownClicked) {
+    private void createNavigationView(Perspective perspective,
+                                      Runnable onNewPageClickedListener,
+                                      Runnable onMovePageUpClicked,
+                                      Runnable onMovePageDownClicked) {
 
-        ToolbarButtonGroup navigationButtonGroup;
+        ToolbarButtonGroup buttonGroup;
 
-        System.out.println("createBookNavigationView()");
+        view = perspective.addView(View.createView(
+                ExtendedLayout.CENTER, EmojiIcon.COMPASS,"Book Navigation", layout));
+        view.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.54f));
+        view.getPanel().setMaximizable(false);
+        view.setSize(ViewSize.ofAbsoluteWidth(400));
+        view.getPanel().setPadding(10);
 
-        navigationView = perspective.addView(View.createView(
-                ExtendedLayout.CENTER, EmojiIcon.COMPASS,"Book Navigation", navigationLayout));
-        navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.54f));
-        navigationView.getPanel().setMaximizable(false);
-        navigationView.setSize(ViewSize.ofAbsoluteWidth(400));
-        navigationView.getPanel().setPadding(10);
-
-        navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
-        ToolbarButton newPageButton = navigationButtonGroup.addButton(
+        buttonGroup = view.addLocalButtonGroup(new ToolbarButtonGroup());
+        ToolbarButton newPageButton = buttonGroup.addButton(
                 ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
         newPageButton.onClick.addListener(onNewPageClickedListener);
 
-        navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
-        ToolbarButton upButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
-        ToolbarButton downButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
+        buttonGroup = view.addLocalButtonGroup(new ToolbarButtonGroup());
+        ToolbarButton upButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
+        ToolbarButton downButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
         upButton.onClick.addListener(onMovePageUpClicked);
         downButton.onClick.addListener(onMovePageDownClicked);
     }
