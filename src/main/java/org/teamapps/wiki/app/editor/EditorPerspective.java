@@ -48,11 +48,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final SessionUser user;
 
     private BookNavigationView bookNavigationView;
-//    private View navigationView;
-//    private VerticalLayout navigationLayout;
-//    ComboBox<Book> bookComboBox;
-//    ComboBox<Chapter> chapterComboBox;
-//    Tree<Page> pageTree;
 
     ListTreeModel<Book> bookModel;
     ListTreeModel<Chapter> chapterModel;
@@ -83,8 +78,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void createUi() {
         Perspective perspective = getPerspective();
 
-//        createNavigationLayout();
-//        createBookNavigationView(perspective);
         createListTreeModel();
         bookNavigationView = new BookNavigationView();
         bookNavigationView.create(perspective,
@@ -122,64 +115,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0,
                         true, false));
     }
-/*    private void createNavigationLayout() {
-
-        System.out.println("createNavigationLayout()");
-
-        bookModel = new ListTreeModel<>(Book.getAll());
-        chapterModel = new ListTreeModel<Chapter>(Collections.EMPTY_LIST);
-        pageModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-        pageModel.setTreeNodeInfoFunction(
-                page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0,
-                                    true, false));
-
-        navigationLayout = new VerticalLayout();
-
-        bookComboBox = new ComboBox<>();
-        bookComboBox.setModel(bookModel);
-        bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        bookComboBox.setPropertyProvider((book, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.CLOSED_BOOK);
-            map.put(BaseTemplate.PROPERTY_CAPTION, book.getTitle());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, book.getDescription());
-            return map;
-        });
-        bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
-        bookComboBox.onValueChanged.addListener(selectedBook::set);
-
-        chapterComboBox = new ComboBox<>();
-        chapterComboBox.setModel(chapterModel);
-        chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        chapterComboBox.setPropertyProvider((chapter, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, EmojiIcon.OPEN_BOOK);
-            map.put(BaseTemplate.PROPERTY_CAPTION, chapter.getTitle());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, chapter.getDescription());
-            return map;
-        });
-        chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-        chapterComboBox.onValueChanged.addListener(chapter -> {
-            selectedChapter.set(chapter);
-        });
-
-        pageTree = new Tree<>(pageModel);
-        pageTree.setOpenOnSelection(true);
-        pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        pageTree.setPropertyProvider(getPagePropertyProvider());
-        pageTree.onNodeSelected.addListener(selectedPage::set);
-
-        navigationLayout.addComponent(bookComboBox);
-        navigationLayout.addComponent(chapterComboBox);
-        navigationLayout.addComponent(pageTree);
-    }*/
 
     private void initializeTwoWayBindables() {
 
         selectedBook.onChanged().addListener(book -> {
             if (Objects.nonNull(book)) {
                 System.out.println("selectedBook.onChanged() : " + book.getTitle());
-//                bookComboBox.setValue(book);
                 bookNavigationView.setSelectedBook(book);
 
                 chapterModel.setRecords(book.getChapters());
@@ -194,14 +135,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedChapter.onChanged().addListener(chapter -> {
             if (Objects.nonNull(chapter)) {
                 System.out.println("selectedChapter.onChanged() : " +  chapter.getTitle());
-//                chapterComboBox.setValue(chapter);
                 bookNavigationView.setSelectedChapter(chapter);
 
                 pageModel.setRecords(selectedChapter.get().getPages());
                 selectedPage.set(getReOrderedPages(chapter).stream().findFirst().orElse(null));
             } else {
                 System.out.println("selectedChapter.onChanged() : (null)");
-//                chapterComboBox.setValue(null);
                 bookNavigationView.setSelectedChapter(null);
 
                 pageModel.setRecords(Collections.EMPTY_LIST);
@@ -226,50 +165,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         });
     }
 
-/*    private void createBookNavigationView(Perspective perspective) {
-        ToolbarButtonGroup navigationButtonGroup;
-
-        System.out.println("createBookNavigationView()");
-
-        navigationView = perspective.addView(View.createView(ExtendedLayout.CENTER, EmojiIcon.COMPASS,
-                                                             "Book Navigation", navigationLayout));
-        navigationView.getPanel().setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.54f));
-        navigationView.getPanel().setMaximizable(false);
-        navigationView.setSize(ViewSize.ofAbsoluteWidth(400));
-        navigationView.getPanel().setPadding(10);
-
-        navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
-        ToolbarButton newPageButton = navigationButtonGroup.addButton(
-                ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
-        newPageButton.onClick.addListener(() -> {
-            // ToDo Check before executing the code lines below:
-            //      Is another page currently in edit mode? What then? auto-save? cancel? ask user?
-
-            System.out.println("newPageButton.onClick()");
-
-            if (selectedChapter.get() == null) {
-                CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Cannot create a page. No chapter is selected!");
-                return;
-            }
-
-            Page newPage = createNewPage(selectedChapter.get());
-            selectedPage.set(newPage);
-
-            showPageSettingsWindow(newPage);
-        });
-
-        navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
-        ToolbarButton upButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
-        ToolbarButton downButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
-        upButton.onClick.addListener(() -> {
-            System.out.println("upButton.onClick()");
-            reorderPage(selectedPage.get(), true);
-        });
-        downButton.onClick.addListener(() ->{
-            System.out.println("downButton.onClick()");
-            reorderPage(selectedPage.get(), false);
-        });
-    }*/
 
     private void onNewPageButtonClicked() {
 
@@ -573,31 +468,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
     }
 
-
-//    private void updateBookComboBox() {
-//
-//        System.out.println("updateBookComboBox()");
-//
-//        bookModel = new ListTreeModel<>(Book.getAll());
-//        bookComboBox.setValue(selectedBook.get());
-//    }
-
-//    private void updateChapterComboBox() {
-//
-//        System.out.println("updateChapterComboBox()");
-//
-//        ListTreeModel<Chapter> chapterListTreeModel = new ListTreeModel<>(selectedBook.get().getChapters());
-//        chapterComboBox.setModel(chapterListTreeModel);
-//        chapterComboBox.setValue(selectedChapter.get());
-//    }
-
     private void updatePageTree() {
 
         System.out.println("updatePageTree()");
 
         pageModel.setRecords(getReOrderedPages(selectedChapter.get()));
         logPageList("pageModel", pageModel);
-        // pageTree.setSelectedNode(selectedPage.get());
         bookNavigationView.setSelectedPage(selectedPage.get());
     }
 

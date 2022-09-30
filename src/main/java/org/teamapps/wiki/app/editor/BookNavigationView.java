@@ -76,13 +76,6 @@ public class BookNavigationView {
                                         Consumer<Page> onSelectedPageChangedListener) {
         System.out.println("createNavigationLayout()");
 
-//        bookModel = new ListTreeModel<>(Book.getAll());
-//        chapterModel = new ListTreeModel<Chapter>(Collections.EMPTY_LIST);
-//        pageModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-//        pageModel.setTreeNodeInfoFunction(
-//                page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0,
-//                        true, false));
-
         navigationLayout = new VerticalLayout();
 
         bookComboBox = new ComboBox<>();
@@ -90,7 +83,6 @@ public class BookNavigationView {
         bookComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         bookComboBox.setPropertyProvider(getBookPropertyProvider());
         bookComboBox.setRecordToStringFunction(book -> book.getTitle() + " - " + book.getDescription());
-//        bookComboBox.onValueChanged.addListener(selectedBook::set);
         bookComboBox.onValueChanged.addListener(onSelectedBookChangedListener);
 
         chapterComboBox = new ComboBox<>();
@@ -98,14 +90,12 @@ public class BookNavigationView {
         chapterComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         chapterComboBox.setPropertyProvider(getChapterPropertyProvider());
         chapterComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-//        chapterComboBox.onValueChanged.addListener(selectedChapter.set);
         chapterComboBox.onValueChanged.addListener(onSelectedChapterChangedListener);
 
         pageTree = new Tree<>(pageModel);
         pageTree.setOpenOnSelection(true);
         pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageTree.setPropertyProvider(getPagePropertyProvider());
-//        pageTree.onNodeSelected.addListener(selectedPage::set);
         pageTree.onNodeSelected.addListener(onSelectedPageChangedListener);
 
         navigationLayout.addComponent(bookComboBox);
@@ -132,35 +122,11 @@ public class BookNavigationView {
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton newPageButton = navigationButtonGroup.addButton(
                 ToolbarButton.createTiny(CompositeIcon.of(EmojiIcon.PAGE_FACING_UP, EmojiIcon.PLUS), "New Page"));
-//        newPageButton.onClick.addListener(() -> {
-//            // ToDo Check before executing the code lines below:
-//            //      Is another page currently in edit mode? What then? auto-save? cancel? ask user?
-//
-//            System.out.println("newPageButton.onClick()");
-//
-//            if (selectedChapter.get() == null) {
-//                CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Cannot create a page. No chapter is selected!");
-//                return;
-//            }
-//
-//            Page newPage = createNewPage(selectedChapter.get());
-//            selectedPage.set(newPage);
-//
-//            showPageSettingsWindow(newPage);
-//        });
         newPageButton.onClick.addListener(onNewPageClickedListener);
 
         navigationButtonGroup = navigationView.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton upButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
         ToolbarButton downButton = navigationButtonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
-//        upButton.onClick.addListener(() -> {
-//            System.out.println("upButton.onClick()");
-//            reorderPage(selectedPage.get(), true);
-//        });
-//        downButton.onClick.addListener(() ->{
-//            System.out.println("downButton.onClick()");
-//            reorderPage(selectedPage.get(), false);
-//        });
         upButton.onClick.addListener(onMovePageUpClicked);
         downButton.onClick.addListener(onMovePageDownClicked);
     }
@@ -205,5 +171,4 @@ public class BookNavigationView {
             return map;
         };
     }
-
 }
