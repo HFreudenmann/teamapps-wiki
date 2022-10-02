@@ -7,7 +7,6 @@ import org.teamapps.application.api.localization.LocalizationData;
 import org.teamapps.application.api.privilege.ApplicationPrivilegeProvider;
 import org.teamapps.application.api.privilege.ApplicationRole;
 import org.teamapps.application.api.privilege.PrivilegeGroup;
-import org.teamapps.application.api.theme.ApplicationIcons;
 import org.teamapps.application.api.versioning.ApplicationVersion;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.universaldb.schema.SchemaInfoProvider;
@@ -15,8 +14,10 @@ import org.teamapps.wiki.app.books.BooksPerspectiveBuilder;
 import org.teamapps.wiki.app.editor.EditorPerspectiveBuilder;
 import org.teamapps.wiki.model.WikiSchema;
 
-import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 public class WikiApplicationBuilder extends AbstractApplicationBuilder {
 
