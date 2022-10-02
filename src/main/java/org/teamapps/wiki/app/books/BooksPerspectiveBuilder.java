@@ -15,6 +15,7 @@ public class BooksPerspectiveBuilder extends AbstractPerspectiveBuilder {
 
     @Override
     public boolean isPerspectiveAccessible(ApplicationPrivilegeProvider privilegeProvider) {
+        // Is the perspective accessible in the application menu via a menu button?
         return true;
     }
 
