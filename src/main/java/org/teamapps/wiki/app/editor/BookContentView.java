@@ -30,24 +30,36 @@ public class BookContentView {
     ToolbarButton saveButton;
     ToolbarButton cancelButton;
     ToolbarButton editButton;
+    ToolbarButton editPageSettingsButton;
 
-    boolean isEditModeEnabled = false;
+    PAGE_EDIT_MODE pageEditMode = PAGE_EDIT_MODE.OFF;
+
+    public enum PAGE_EDIT_MODE {
+        OFF,
+        CONTENT,
+        SETTINGS
+    }
 
     public void create(Perspective perspective,
                        Function<String, Page> onPageSaved, Supplier<Page> onPageEditCanceled,
-                       Runnable onPageEditClicked, Runnable onEditPageSettingsClicked) {
+                       Runnable onEditPageContentClicked, Runnable onEditPageSettingsClicked) {
         createBookContentLayout();
         createBookContentView(perspective,
-                              onPageSaved, onPageEditCanceled, onPageEditClicked, onEditPageSettingsClicked);
+                              onPageSaved, onPageEditCanceled, onEditPageContentClicked, onEditPageSettingsClicked);
     }
 
-    public void setEditMode(boolean isEditModeEnabled) {
+    public void setPageEditMode(PAGE_EDIT_MODE newEditMode) {
 
-        System.out.println("   BookContentView.setEditMode : " + isEditModeEnabled);
-        this.isEditModeEnabled = isEditModeEnabled;
+        System.out.println("   BookContentView.setPageEditMode : " + pageEditMode + " -> " + newEditMode);
 
-        setToolbarButtonEnabledState();
+        if (pageEditMode == PAGE_EDIT_MODE.OFF || newEditMode == PAGE_EDIT_MODE.OFF) {
+            this.pageEditMode = newEditMode;
+            setToolbarButtonVisibleState();
+        } else {
+            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
+        }
     }
+
 
     public void setFocus() {
         contentView.focus();
@@ -72,7 +84,7 @@ public class BookContentView {
             contentDescriptionField.setVisible(false);
         }
 
-        if (isEditModeEnabled) {
+        if (pageEditMode == PAGE_EDIT_MODE.CONTENT) {
             contentEditor.setValue(page.getContent());
             contentEditor.onValueChanged.addListener(page::setContent); // set content, but not saved
 
@@ -143,7 +155,7 @@ public class BookContentView {
 
     private void createBookContentView(Perspective perspective,
                                        Function<String, Page> onPageSaved, Supplier<Page> onPageEditCanceled,
-                                       Runnable onPageEditClicked, Runnable onEditPageSettingsClicked) {
+                                       Runnable onEditPageContentClicked, Runnable onEditPageSettingsClicked) {
 
         contentView = perspective.addView(
                 View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", contentVerticalLayout));
@@ -173,18 +185,37 @@ public class BookContentView {
         });
 
         editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
-        editButton.onClick.addListener(onPageEditClicked);
+        editButton.onClick.addListener(onEditPageContentClicked);
 
-        ToolbarButton pageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
-        pageSettingsButton.onClick.addListener(onEditPageSettingsClicked);
+        editPageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
+        editPageSettingsButton.onClick.addListener(onEditPageSettingsClicked);
     }
 
 
-    private void setToolbarButtonEnabledState() {
-        saveButton.setVisible(isEditModeEnabled);
-        cancelButton.setVisible(isEditModeEnabled);
+    private void setToolbarButtonVisibleState() {
 
-        editButton.setVisible(!isEditModeEnabled);
+        switch (pageEditMode) {
+            case OFF:
+                saveButton.setVisible(false);
+                cancelButton.setVisible(false);
+                editButton.setVisible(true);
+                editPageSettingsButton.setVisible(true);
+                break;
+
+            case CONTENT:
+                saveButton.setVisible(true);
+                cancelButton.setVisible(true);
+                editButton.setVisible(false);
+                editPageSettingsButton.setVisible(false);
+                break;
+
+            case SETTINGS:
+                saveButton.setVisible(false);
+                cancelButton.setVisible(false);
+                editButton.setVisible(false);
+                editPageSettingsButton.setVisible(false);
+                break;
+        }
     }
 
 }

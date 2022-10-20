@@ -53,6 +53,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
     private Page emptyPage;
+    private Page currentEditPage;
 
 
     public EditorPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
@@ -83,6 +84,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         emptyPage = Page.create()
                         .setParent(null).setTitle("").setDescription("")
                         .setChapter(null).setContent("");
+        currentEditPage = null;
 
         selectedBook.set(Book.getAll().stream().findFirst().orElse(null));
         selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null));
@@ -93,6 +95,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             // Displaying an empty page changes to the correct background color.
             updateContentView(emptyPage);
         }
+
     }
 
 
@@ -157,7 +160,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         editingModeEnabled.onChanged().addListener(enabled -> {
             System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
 
-            bookContentView.setEditMode(enabled);
+            bookContentView.setPageEditMode(enabled ? BookContentView.PAGE_EDIT_MODE.CONTENT
+                                                    : BookContentView.PAGE_EDIT_MODE.OFF);
         });
 
     }
@@ -174,10 +178,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             return;
         }
 
-        Page newPage = createNewPage(selectedChapter.get());
-        selectedPage.set(newPage);
+        currentEditPage = createNewPage(selectedChapter.get());
+        selectedPage.set(currentEditPage);
 
-        showPageSettingsWindow(newPage);
+        showPageSettingsWindow(currentEditPage);
     }
 
     private void onMovePageUpButtonClicked() {
@@ -200,6 +204,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         page.setContent(pageContent);
         page.save();
         pageManager.unlockPage(page, user);
+        currentEditPage = null;
 
         return page;
     }
@@ -211,6 +216,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         Page page = selectedPage.get();
         page.clearChanges();
         pageManager.unlockPage(page, user);
+        currentEditPage = null;
 
         return page;
     }
@@ -218,12 +224,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void onPageEditClicked() {
 
         System.out.println("editButton.onClick");
-        editPage(selectedPage.get());
+        currentEditPage = selectedPage.get();
+        editPage(currentEditPage);
     }
 
     private void onEditPageSettingsClicked() {
 
-        showPageSettingsWindow(selectedPage.get());
+        bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
+        currentEditPage = selectedPage.get();
+        showPageSettingsWindow(currentEditPage);
     }
 
 
@@ -261,9 +270,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.out.println("showPageSettingsWindow : page title = " + page.getTitle());
         }
 
+        // ToDo : Form Window can be closed with the x-button. The behaviour of the x-button must be the same as the
+        //        cancel-button. But we can neither disable the x-button nor add a handler for the onClickedEvent.
+        //        Hence, if the user clicks the x-button instead of the cancel-button, the toolbar buttons are not
+        //        set to visible again!
+
         FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
         ToolbarButton saveButton = formWindow.addSaveButton();
-        formWindow.addCancelButton();
+        ToolbarButton cancelButton = formWindow.addCancelButton();
 
         TextField pageTitleField = new TextField();
         TextField pageDescriptionField = new TextField();
@@ -320,6 +334,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 if (isConfirmed) {
                     page.delete();
                     selectedPage.set(null);
+                    bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
                     formWindow.close();
                 }
             });
@@ -339,11 +354,17 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.setParent(page.equals(newParent) ? null : newParent);
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
+            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
             updateContentView();
             updatePageTree();
 
             selectedPage.set(page); // update views
             formWindow.close();
+        });
+
+        cancelButton.onClick.addListener(() -> {
+            System.out.println("  PageSettings.cancelButton.onClick");
+            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
         });
 
         formWindow.show();
@@ -376,12 +397,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void logPageList(ListTreeModel<Page> pageTreeModel)
     {
-        System.out.println("  Page list :");
+        System.out.println("  Page list : (id / title)");
             for (Page currentPage : pageTreeModel.getRecords()) {
                 if (currentPage != null) {
-                    System.out.println("         Page (id/title) : " + currentPage.getId() + "/" + currentPage.getTitle());
+                    System.out.println("     " + currentPage.getId() + " / " + currentPage.getTitle());
                 } else {
-                    System.out.println("         Page (id/title) : null");
+                    System.out.println("     - / - (NULL)");
                 }
             }
     }
