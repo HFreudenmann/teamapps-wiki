@@ -11,8 +11,10 @@ import org.teamapps.ux.application.layout.ExtendedLayout;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.application.view.View;
 import org.teamapps.ux.application.view.ViewSize;
+import org.teamapps.ux.component.field.Label;
 import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.flexcontainer.VerticalLayout;
+import org.teamapps.ux.component.panel.Panel;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
@@ -36,9 +38,13 @@ import java.util.function.Consumer;
      |        |--- downButton
      |
      |-- layout
+            |--- Label bookComboBox
             |--- bookComboBox
+            |--- Label chapterComboBox
             |--- chapterComboBox
-            |--- pageTree
+            |--- Label pageTree
+            |--- Panel
+                   |--- pageTree
  */
 public class BookNavigationView {
 
@@ -109,10 +115,19 @@ public class BookNavigationView {
         pageTree.setEntryTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageTree.setPropertyProvider(getPagePropertyProvider());
         pageTree.onNodeSelected.addListener(onSelectedPageChangedListener);
+        pageTree.setShowExpanders(true);
 
+        Panel treePanel = new Panel();
+        treePanel.setContent(pageTree);
+        treePanel.setHideTitleBar(true);
+        treePanel.setStretchContent(true);
+
+        layout.addComponent(new Label("Books:"));
         layout.addComponent(bookComboBox);
+        layout.addComponent(new Label("Chapters:"));
         layout.addComponent(chapterComboBox);
-        layout.addComponent(pageTree);
+        layout.addComponent(new Label("Pages:"));
+        layout.addComponentFillRemaining(treePanel);
     }
 
     private void createNavigationView(Perspective perspective,
