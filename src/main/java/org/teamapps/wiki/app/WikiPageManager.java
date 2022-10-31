@@ -4,12 +4,22 @@ import org.teamapps.application.api.user.SessionUser;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WikiPageManager {
     private final ConcurrentHashMap<Page, PageStatus> pageStatusHashMap = new ConcurrentHashMap<>();
 
     public PageStatus lockPage(Page page, SessionUser editor) {
+        if (Objects.isNull(page)) {
+            System.err.println("   Try to lock page = NULL");
+        }
+        if (Objects.isNull(editor)) {
+            System.err.println("   Try to lock page = " + page.getTitle() + " with editor = NULL");
+        }
+        // ToDo Handle errors : page or editor == NULL
+        System.out.println("   lock page = " + page.getId());
+
         editor.getSessionContext().onDestroyed.addListener(() -> unlockPage(page, editor)); // TODO: onLogout ?
         return pageStatusHashMap.computeIfAbsent(page, page1 -> new PageStatus(true, editor));
     }
@@ -17,11 +27,23 @@ public class WikiPageManager {
     public void unlockPage(Page page, SessionUser editor) {
         PageStatus pageStatus;
 
-        if (page == null || (pageStatus = getPageStatus(page)) == null) {
+        if (Objects.isNull(page)) {
+            System.err.println("   Try to unlock page = NULL");
+            return;
+        }
+        System.out.println("   unlock page = " + page.getId());
+
+        pageStatus = getPageStatus(page);
+        if (pageStatus == null) {
+            System.err.println("   Failed to unlock page with status = NULL");
             return;
         }
 
-        if (pageStatus.getEditor().equals(editor)) {
+        SessionUser pageLockedByUser = pageStatus.getEditor();
+        if (pageLockedByUser == null) {
+            System.err.println("   Failed to unlock page; user is NULL!");
+        }
+        else if (pageLockedByUser.equals(editor)) {
             pageStatusHashMap.remove(page);
         }
     }
