@@ -41,11 +41,14 @@ public class BookContentView {
     }
 
     public void create(Perspective perspective,
-                       Function<String, Page> onPageSaved, Supplier<Page> onPageEditCanceled,
-                       Runnable onEditPageContentClicked, Runnable onEditPageSettingsClicked) {
+                       Function<String, Page> onPageContentSaveClicked,
+                       Supplier<Page> onPageContentCancelClicked,
+                       Runnable onPageContentEditClicked,
+                       Runnable onPageSettingsEditClicked) {
         createBookContentLayout();
         createBookContentView(perspective,
-                              onPageSaved, onPageEditCanceled, onEditPageContentClicked, onEditPageSettingsClicked);
+                              onPageContentSaveClicked, onPageContentCancelClicked, onPageContentEditClicked,
+                              onPageSettingsEditClicked);
     }
 
     public void setPageEditMode(PAGE_EDIT_MODE newEditMode) {
@@ -155,8 +158,9 @@ public class BookContentView {
     }
 
     private void createBookContentView(Perspective perspective,
-                                       Function<String, Page> onPageSaved, Supplier<Page> onPageEditCanceled,
-                                       Runnable onEditPageContentClicked, Runnable onEditPageSettingsClicked) {
+                                       Function<String, Page> onPageContentSave, Supplier<Page> onPageContentCancel,
+                                       Runnable onPageContentEdit,
+                                       Runnable onPageSettingsEdit) {
 
         contentView = perspective.addView(
                 View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content", contentVerticalLayout));
@@ -172,7 +176,7 @@ public class BookContentView {
         saveButton.onClick.addListener(() -> {
             System.out.println("saveButton.onClick");
 
-            Page savedPage = onPageSaved.apply(contentEditor.getValue());
+            Page savedPage = onPageContentSave.apply(contentEditor.getValue());
             updateContentView(savedPage);
         });
 
@@ -181,41 +185,39 @@ public class BookContentView {
         cancelButton.onClick.addListener(() -> {
             System.out.println("cancelButton.onClick");
 
-            Page originalPage = onPageEditCanceled.get();
+            Page originalPage = onPageContentCancel.get();
             updateContentView(originalPage);
         });
 
         editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
-        editButton.onClick.addListener(onEditPageContentClicked);
+        editButton.onClick.addListener(onPageContentEdit);
 
         editPageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
-        editPageSettingsButton.onClick.addListener(onEditPageSettingsClicked);
+        editPageSettingsButton.onClick.addListener(onPageSettingsEdit);
     }
 
 
     private void setToolbarButtonVisibleState() {
 
         switch (pageEditMode) {
-            case OFF:
+            case OFF -> {
                 saveButton.setVisible(false);
                 cancelButton.setVisible(false);
                 editButton.setVisible(true);
                 editPageSettingsButton.setVisible(true);
-                break;
-
-            case CONTENT:
+            }
+            case CONTENT -> {
                 saveButton.setVisible(true);
                 cancelButton.setVisible(true);
                 editButton.setVisible(false);
                 editPageSettingsButton.setVisible(false);
-                break;
-
-            case SETTINGS:
+            }
+            case SETTINGS -> {
                 saveButton.setVisible(false);
                 cancelButton.setVisible(false);
                 editButton.setVisible(false);
                 editPageSettingsButton.setVisible(false);
-                break;
+            }
         }
     }
 
