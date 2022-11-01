@@ -11,6 +11,7 @@ import org.teamapps.ux.component.field.richtext.RichTextEditor;
 import org.teamapps.ux.component.flexcontainer.VerticalLayout;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.toolbar.ToolbarButtonGroup;
+import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.function.Function;
@@ -59,9 +60,9 @@ public class BookContentView {
             this.pageEditMode = newEditMode;
             setToolbarButtonVisibleState();
         }
-//        else {
-//            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
-//        }
+        else {
+            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
+        }
     }
 
 
@@ -78,6 +79,7 @@ public class BookContentView {
         System.out.println("   BookContentView.updateContentView : page " + page.getTitle());
 
         contentView.getPanel().setTitle(page.getTitle());
+        contentView.getPanel().setIcon(WikiUtils.getIconFromName(page.getEmoji()));
         contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
 
         String description = page.getDescription();

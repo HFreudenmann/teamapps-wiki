@@ -15,6 +15,7 @@ import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
+import org.teamapps.ux.component.tree.TreeNodeInfo;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
@@ -57,27 +58,20 @@ public class PageSettingsForm {
         pageTitleField = new TextField();
         pageDescriptionField = new TextField();
 
-//        pageTitleField.setValue(page.getTitle());
-//        pageDescriptionField.setValue(page.getDescription());
-
         emojiIconComboBox = new ComboBox<>();
-
         emojiIconComboBox.setModel(getEmojiIconComboBoxModel());
         emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
         emojiIconComboBox.setPropertyProvider(getEmojiIconPropertyProvider());
         emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
-//        emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
 
         pageComboBox = new ComboBox<>();
-//        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
         pageComboBox.setModel(pageListModel);
         pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
         pageComboBox.setPropertyProvider(getPagePropertyProvider());
         pageComboBox.setShowClearButton(true);
-//        pageComboBox.setValue(page.getParent());
-
-        pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false));
         pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+
+        pageListModel.setTreeNodeInfoFunction(getPageTreeNodeInfoFunction());
 
         formWindow.addSection();
         formWindow.addField("Page Icon", emojiIconComboBox);
@@ -94,9 +88,8 @@ public class PageSettingsForm {
         deleteButton.onClicked.addListener(onDeletePageClicked(onPageSettingsPageDelete));
         saveButton.onClick.addListener(onSavePageClicked(onPageSettingsSave));
         cancelButton.onClick.addListener(onCancelPageClicked(onPageSettingsCancel));
-
-//        formWindow.show();
     }
+
 
     public void close() {
         formWindow.close();
@@ -110,97 +103,13 @@ public class PageSettingsForm {
         //        set to visible again!
 
         page = editPage;
-
-        if (Objects.isNull(page)) {
-            CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Failed to edit settings of a non-existing (NULL) page!");
-            System.err.println("showPageSettingsWindow : page is null!");
-            return;
-        } else {
-            System.out.println("showPageSettingsWindow : page title = " + page.getTitle());
-        }
-
-
-//        FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", applicationInstanceData);
-//        ToolbarButton saveButton = formWindow.addSaveButton();
-//        ToolbarButton cancelButton = formWindow.addCancelButton();
-//
-//        TextField pageTitleField = new TextField();
-//        TextField pageDescriptionField = new TextField();
+        pageListModel.setTreeNodeInfoFunction(getPageTreeNodeInfoFunction());
 
         pageTitleField.setValue(page.getTitle());
         pageDescriptionField.setValue(page.getDescription());
-
-//        ComboBox<EmojiIcon> emojiIconComboBox = new ComboBox<>();
-//        ComboBoxModel<EmojiIcon> iconModel = getEmojiIconComboBoxModel();
-//        emojiIconComboBox.setModel(iconModel);
-//        emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
-//        emojiIconComboBox.setPropertyProvider(getEmojiIconPropertyProvider());
-//        emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
-        emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
-
-//        ComboBox<Page> pageComboBox = new ComboBox<>();
-//        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
+        emojiIconComboBox.setValue(WikiUtils.getIconFromName(page.getEmoji()));
         pageComboBox.setModel(pageListModel);
-//        pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-//        pageComboBox.setPropertyProvider(getPagePropertyProvider());
-//        pageComboBox.setPropertyProvider(pagePropertyProvider);
-//        pageComboBox.setShowClearButton(true);
         pageComboBox.setValue(page.getParent());
-//        pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false));
-//        pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
-
-//        formWindow.addSection();
-//        formWindow.addField("Page Icon", emojiIconComboBox);
-//        formWindow.addField("Page Title", pageTitleField);
-//        formWindow.addField("Page Description", pageDescriptionField);
-//        formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
-//        formWindow.addField("Parent Page", pageComboBox);
-//
-//        Button<BaseTemplateRecord> deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
-//        formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
-//        formWindow.getFormLayout().addLabelComponent(deleteButton);
-//        formWindow.addField("Delete page permanently", deleteButton);
-//        deleteButton.onClicked.addListener(() -> {
-//            System.out.println("  PageSettings.deleteButton.onClick");
-//
-//            // ToDo: Cascading delete; currently children are lifted up one level
-//            Dialogue okCancel = Dialogue.createOkCancel(EmojiIcon.WARNING, "Permanently delete page \"" + page.getTitle() + "\"?", "Do you really want to delete this page?");
-//            okCancel.show();
-//            okCancel.onResult.addListener(isConfirmed -> {
-//                if (isConfirmed) {
-//                    // ToDo Unlock page
-//                    onPageSettingsPageDelete.run();
-////                    page.delete();
-////                    selectedPage.set(null);
-////                    bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-//                    formWindow.close();
-//                }
-//            });
-//        });
-//
-//        saveButton.onClick.addListener(() -> {
-//            System.out.println("  PageSettings.saveButton.onClick");
-//
-//            page.setTitle(pageTitleField.getValue());
-//            page.setDescription(pageDescriptionField.getValue());
-//
-//            Page newParent = pageComboBox.getValue();
-//            if (WikiUtils.isChildPage(newParent, page)) {
-//                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent");
-//                newParent = page.getParent();
-//            }
-//            page.setParent(page.equals(newParent) ? null : newParent);
-//            page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
-//            page.save();
-////            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-////            updateContentView();
-////            updatePageTree();
-////            selectedPage.set(page); // update views
-//            onPageSettingsSave.apply(page);
-//            formWindow.close();
-//        });
-//
-//        cancelButton.onClick.addListener(onCancelPageClicked(onPageSettingsCancel));
 
         formWindow.show();
     }
@@ -245,10 +154,6 @@ public class PageSettingsForm {
             page.setParent(page.equals(newParent) ? null : newParent);
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
-//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-//            updateContentView();
-//            updatePageTree();
-//            selectedPage.set(page); // update views
             onPageSettingsSave.apply(page);
 
             formWindow.close();
@@ -259,7 +164,6 @@ public class PageSettingsForm {
     private Runnable onCancelPageClicked(Runnable onPageSettingsCancel) {
         return () -> {
             System.out.println("  PageSettings.cancelButton.onClick");
-//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
             onPageSettingsCancel.run();
         };
     }
@@ -308,6 +212,10 @@ public class PageSettingsForm {
                 .collect(Collectors.toList());
     }
 
+    @NotNull
+    private Function<Page, TreeNodeInfo> getPageTreeNodeInfoFunction() {
+        return p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false);
+    }
 
 }
 
