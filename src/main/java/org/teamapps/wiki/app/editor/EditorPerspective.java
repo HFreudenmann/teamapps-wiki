@@ -1,28 +1,18 @@
 package org.teamapps.wiki.app.editor;
 
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
 import org.teamapps.application.api.user.SessionUser;
 import org.teamapps.application.server.system.session.PerspectiveSessionData;
-import org.teamapps.application.ux.form.FormWindow;
-import org.teamapps.common.format.Color;
 import org.teamapps.data.extract.PropertyProvider;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.databinding.TwoWayBindableValue;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
 import org.teamapps.ux.application.perspective.Perspective;
-import org.teamapps.ux.component.dialogue.Dialogue;
-import org.teamapps.ux.component.field.Button;
-import org.teamapps.ux.component.field.TextField;
-import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.template.BaseTemplate;
-import org.teamapps.ux.component.template.BaseTemplateRecord;
-import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
-import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
 import org.teamapps.wiki.app.WikiApplicationBuilder;
@@ -33,7 +23,6 @@ import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
@@ -44,6 +33,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private BookNavigationView bookNavigationView;
     private BookContentView bookContentView;
 
+    private PageSettingsForm pageSettingsForm;
+
     ListTreeModel<Book> bookModel;
     ListTreeModel<Chapter> chapterModel;
     ListTreeModel<Page> pageModel;
@@ -52,7 +43,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Book> selectedBook = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
-    private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
 
     private BookContentView.PAGE_EDIT_MODE pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
     private Page emptyPage;
@@ -80,7 +70,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                                   this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked);
         bookContentView  = new BookContentView();
         bookContentView.create(perspective,
-                               this::onPageSaved, this::onPageEditCanceled, this::onPageEditClicked, this::onEditPageSettingsClicked);
+                               this::onPageContentSaved, this::onPageContentCanceled, this::onEditPageContentClicked,
+                               this::onEditPageSettingsClicked);
+        pageSettingsForm = new PageSettingsForm();
+        pageSettingsForm.create(getApplicationInstanceData(), new ListTreeModel<Page>(Collections.EMPTY_LIST),
+                                this::onPageSettingsSaved, this::onPageSettingsCanceled, this::onPageSettingsPageDeleted);
 
         initializeTwoWayBindables();
 
@@ -162,19 +156,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : (null)");
 
                 updateContentView(emptyPage);
-                editingModeEnabled.set(false);
                 pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
                 bookContentView.setPageEditMode(pageEditMode);
             }
             updatePageTree();
-        });
-
-        editingModeEnabled.onChanged().addListener(enabled -> {
-            System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
-
-//            bookContentView.setPageEditMode(enabled ? BookContentView.PAGE_EDIT_MODE.CONTENT
-//                                                    : BookContentView.PAGE_EDIT_MODE.OFF);
-            // ToDo kann entfernt werden (?)
         });
 
     }
@@ -194,11 +179,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         currentEditPage = createNewPage(selectedChapter.get());
         selectedPage.set(currentEditPage);
 
-        editingModeEnabled.set(true);
         pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
         bookContentView.setPageEditMode(pageEditMode);
 
-        showPageSettingsWindow(currentEditPage, this::onPageSettingsSaved, this::onPageSettingsCanceled);
+        showPageSettingsWindow(currentEditPage);
     }
 
     private void onMovePageUpButtonClicked() {
@@ -213,10 +197,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
 
-    private Page onPageSaved(String pageContent) {
+    private Page onPageContentSaved(String pageContent) {
 
-        System.out.println("onPageSaved");
-        editingModeEnabled.set(false);
+        System.out.println("onPageContentSaved");
+
         pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
         bookContentView.setPageEditMode(pageEditMode);
 
@@ -229,7 +213,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         return page;
     }
 
-    private Page onPageEditCanceled() {
+    private Page onPageContentCanceled() {
 
         System.out.println("onPageEditCanceled");
 //        editingModeEnabled.set(false);
@@ -250,7 +234,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
 
         System.out.println("   abortPageEdit : page (id / title) - " + page.getId() + ", " + page.getTitle());
-        editingModeEnabled.set(false);
+
+        if (pageEditMode == BookContentView.PAGE_EDIT_MODE.SETTINGS) {
+            pageSettingsForm.close();
+        }
+
         pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
         bookContentView.setPageEditMode(pageEditMode);
 
@@ -259,7 +247,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         currentEditPage = null;
     }
 
-    private void onPageEditClicked() {
+    private void onEditPageContentClicked() {
 
         System.out.println("editButton.onClick");
         currentEditPage = selectedPage.get();
@@ -268,13 +256,12 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void onEditPageSettingsClicked() {
 
-        editingModeEnabled.set(true);
         pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
         bookContentView.setPageEditMode(pageEditMode);
 
         currentEditPage = selectedPage.get();
         pageManager.lockPage(currentEditPage, user);
-        showPageSettingsWindow(currentEditPage, this::onPageSettingsSaved, this::onPageSettingsCanceled);
+        showPageSettingsWindow(currentEditPage);
     }
 
     private Void onPageSettingsSaved(Page modifiedPage) {
@@ -282,7 +269,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         System.out.println("onPageSettingSaved");
         pageManager.unlockPage(currentEditPage, user);
         currentEditPage = null;
-        editingModeEnabled.set(false);
+
         pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
         bookContentView.setPageEditMode(pageEditMode);
 
@@ -296,6 +283,21 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onPageSettingCanceled");
         abortPageEdit(currentEditPage);
+    }
+
+    private void onPageSettingsPageDeleted() {
+
+        System.out.println("onPageSettingsPageDeleted");
+        pageManager.unlockPage(currentEditPage, user);
+        currentEditPage.delete();
+        currentEditPage = null;
+
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
+        bookContentView.setPageEditMode(pageEditMode);
+
+//        updateContentView();
+//        updatePageTree();
+        selectedPage.set(null);
     }
 
     private void editPage(Page page) {
@@ -312,7 +314,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)){
-            editingModeEnabled.set(true); // switch on/off
+
             pageEditMode = BookContentView.PAGE_EDIT_MODE.CONTENT;
             bookContentView.setPageEditMode(pageEditMode);
 
@@ -325,7 +327,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
     }
 
-    private void showPageSettingsWindow(Page page, Function<Page, Void> onPageSettingsSave, Runnable onPageSettingsCancel) {
+    private void showPageSettingsWindow(Page page) {
 
         if (Objects.isNull(page)) {
             CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Page creation failed!");
@@ -335,106 +337,110 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.out.println("showPageSettingsWindow : page title = " + page.getTitle());
         }
 
-        // ToDo : Form Window can be closed with the x-button. The behaviour of the x-button must be the same as the
-        //        cancel-button. But we can neither disable the x-button nor add a handler for the onClickedEvent.
-        //        Hence, if the user clicks the x-button instead of the cancel-button, the toolbar buttons are not
-        //        set to visible again!
-
-        FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
-        ToolbarButton saveButton = formWindow.addSaveButton();
-        ToolbarButton cancelButton = formWindow.addCancelButton();
-
-        TextField pageTitleField = new TextField();
-        TextField pageDescriptionField = new TextField();
-
-        pageTitleField.setValue(page.getTitle());
-        pageDescriptionField.setValue(page.getDescription());
-
-        ComboBox<EmojiIcon> emojiIconComboBox = new ComboBox<>();
-        List<EmojiIcon> iconList = EmojiIcon.getIcons();
-        ComboBoxModel<EmojiIcon> iconModel = s -> iconList.stream()
-                .filter(emojiIcon -> s == null || StringUtils.containsIgnoreCase(emojiIcon.getIconId(), s))
-                .limit(100)
-                .collect(Collectors.toList());
-        emojiIconComboBox.setModel(iconModel);
-        emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
-        emojiIconComboBox.setPropertyProvider((emojiIcon, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put(BaseTemplate.PROPERTY_ICON, emojiIcon);
-            map.put(BaseTemplate.PROPERTY_CAPTION, emojiIcon.getIconId());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, null);
-            return map;
-        });
-        emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
-        emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
-
-        ComboBox<Page> pageComboBox = new ComboBox<>();
         ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
-        pageComboBox.setModel(pageListModel);
-        pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
-        pageComboBox.setPropertyProvider(getPagePropertyProvider());
-        pageComboBox.setShowClearButton(true);
-        pageComboBox.setValue(page.getParent());
-        pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false));
-        pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+        pageSettingsForm.show(page, pageListModel);
 
-        formWindow.addSection();
-        formWindow.addField("Page Icon", emojiIconComboBox);
-        formWindow.addField("Page Title", pageTitleField);
-        formWindow.addField("Page Description", pageDescriptionField);
-        formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
-        formWindow.addField("Parent Page", pageComboBox);
-
-        Button<BaseTemplateRecord> deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
-        formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
-        formWindow.getFormLayout().addLabelComponent(deleteButton);
-        formWindow.addField("Delete page permanently", deleteButton);
-        deleteButton.onClicked.addListener(() -> {
-            System.out.println("  PageSettings.deleteButton.onClick");
-
-            // ToDo: Cascading delete; currently children are lifted up one level
-            Dialogue okCancel = Dialogue.createOkCancel(EmojiIcon.WARNING, "Permanently delete page \"" + page.getTitle() + "\"?", "Do you really want to delete this page?");
-            okCancel.show();
-            okCancel.onResult.addListener(isConfirmed -> {
-                if (isConfirmed) {
-                    // ToDo Unlock page
-                    page.delete();
-                    selectedPage.set(null);
-                    bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-                    formWindow.close();
-                }
-            });
-        });
-
-        saveButton.onClick.addListener(() -> {
-            System.out.println("  PageSettings.saveButton.onClick");
-
-            page.setTitle(pageTitleField.getValue());
-            page.setDescription(pageDescriptionField.getValue());
-
-            Page newParent = pageComboBox.getValue();
-            if (WikiUtils.isChildPage(newParent, page)) {
-                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent");
-                newParent = page.getParent();
-            }
-            page.setParent(page.equals(newParent) ? null : newParent);
-            page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
-            page.save();
-//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-//            updateContentView();
-//            updatePageTree();
-//            selectedPage.set(page); // update views
-            onPageSettingsSave.apply(page);
-            formWindow.close();
-        });
-
-        cancelButton.onClick.addListener(() -> {
-            System.out.println("  PageSettings.cancelButton.onClick");
-//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-            onPageSettingsCancel.run();
-        });
-
-        formWindow.show();
+//        // ToDo : Form Window can be closed with the x-button. The behaviour of the x-button must be the same as the
+//        //        cancel-button. But we can neither disable the x-button nor add a handler for the onClickedEvent.
+//        //        Hence, if the user clicks the x-button instead of the cancel-button, the toolbar buttons are not
+//        //        set to visible again!
+//
+//        FormWindow formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", getApplicationInstanceData());
+//        ToolbarButton saveButton = formWindow.addSaveButton();
+//        ToolbarButton cancelButton = formWindow.addCancelButton();
+//
+//        TextField pageTitleField = new TextField();
+//        TextField pageDescriptionField = new TextField();
+//
+//        pageTitleField.setValue(page.getTitle());
+//        pageDescriptionField.setValue(page.getDescription());
+//
+//        ComboBox<EmojiIcon> emojiIconComboBox = new ComboBox<>();
+//        List<EmojiIcon> iconList = EmojiIcon.getIcons();
+//        ComboBoxModel<EmojiIcon> iconModel = s -> iconList.stream()
+//                .filter(emojiIcon -> s == null || StringUtils.containsIgnoreCase(emojiIcon.getIconId(), s))
+//                .limit(100)
+//                .collect(Collectors.toList());
+//        emojiIconComboBox.setModel(iconModel);
+//        emojiIconComboBox.setTemplate(BaseTemplate.LIST_ITEM_SMALL_ICON_SINGLE_LINE);
+//        emojiIconComboBox.setPropertyProvider((emojiIcon, propertyNames) -> {
+//            Map<String, Object> map = new HashMap<>();
+//            map.put(BaseTemplate.PROPERTY_ICON, emojiIcon);
+//            map.put(BaseTemplate.PROPERTY_CAPTION, emojiIcon.getIconId());
+//            map.put(BaseTemplate.PROPERTY_DESCRIPTION, null);
+//            return map;
+//        });
+//        emojiIconComboBox.setRecordToStringFunction(EmojiIcon::getIconId);
+//        emojiIconComboBox.setValue((page.getEmoji() != null) ? EmojiIcon.forUnicode(page.getEmoji()) : null);
+//
+//        ComboBox<Page> pageComboBox = new ComboBox<>();
+//        ListTreeModel<Page> pageListModel = new ListTreeModel<>(getReOrderedPages(selectedChapter.get()));
+//        pageComboBox.setModel(pageListModel);
+//        pageComboBox.setTemplate(BaseTemplate.LIST_ITEM_MEDIUM_ICON_TWO_LINES);
+//        pageComboBox.setPropertyProvider(getPagePropertyProvider());
+//        pageComboBox.setShowClearButton(true);
+//        pageComboBox.setValue(page.getParent());
+//        pageListModel.setTreeNodeInfoFunction(p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false));
+//        pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
+//
+//        formWindow.addSection();
+//        formWindow.addField("Page Icon", emojiIconComboBox);
+//        formWindow.addField("Page Title", pageTitleField);
+//        formWindow.addField("Page Description", pageDescriptionField);
+//        formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
+//        formWindow.addField("Parent Page", pageComboBox);
+//
+//        Button<BaseTemplateRecord> deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
+//        formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
+//        formWindow.getFormLayout().addLabelComponent(deleteButton);
+//        formWindow.addField("Delete page permanently", deleteButton);
+//        deleteButton.onClicked.addListener(() -> {
+//            System.out.println("  PageSettings.deleteButton.onClick");
+//
+//            // ToDo: Cascading delete; currently children are lifted up one level
+//            Dialogue okCancel = Dialogue.createOkCancel(EmojiIcon.WARNING, "Permanently delete page \"" + page.getTitle() + "\"?", "Do you really want to delete this page?");
+//            okCancel.show();
+//            okCancel.onResult.addListener(isConfirmed -> {
+//                if (isConfirmed) {
+//                    // ToDo Unlock page
+//                    onPageSettingsPageDelete.run();
+////                    page.delete();
+////                    selectedPage.set(null);
+////                    bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+//                    formWindow.close();
+//                }
+//            });
+//        });
+//
+//        saveButton.onClick.addListener(() -> {
+//            System.out.println("  PageSettings.saveButton.onClick");
+//
+//            page.setTitle(pageTitleField.getValue());
+//            page.setDescription(pageDescriptionField.getValue());
+//
+//            Page newParent = pageComboBox.getValue();
+//            if (WikiUtils.isChildPage(newParent, page)) {
+//                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent");
+//                newParent = page.getParent();
+//            }
+//            page.setParent(page.equals(newParent) ? null : newParent);
+//            page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
+//            page.save();
+////            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+////            updateContentView();
+////            updatePageTree();
+////            selectedPage.set(page); // update views
+//            onPageSettingsSave.apply(page);
+//            formWindow.close();
+//        });
+//
+//        cancelButton.onClick.addListener(() -> {
+//            System.out.println("  PageSettings.cancelButton.onClick");
+////            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+//            onPageSettingsCancel.run();
+//        });
+//
+//        formWindow.show();
     }
 
     private void updateContentView() {
