@@ -1,5 +1,6 @@
 package org.teamapps.wiki.app;
 
+import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.wiki.model.wiki.Page;
 
 public class WikiUtils {
@@ -22,5 +23,9 @@ public class WikiUtils {
             parent = parent.getParent();
         }
         return false;
+    }
+
+    public static EmojiIcon getIconFromName(String iconName) {
+        return (iconName!= null) ? EmojiIcon.forUnicode(iconName) : null;
     }
 }
