@@ -55,9 +55,10 @@ public class BookContentView {
         if (pageEditMode == PAGE_EDIT_MODE.OFF || newEditMode == PAGE_EDIT_MODE.OFF) {
             this.pageEditMode = newEditMode;
             setToolbarButtonVisibleState();
-        } else {
-            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
         }
+//        else {
+//            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
+//        }
     }
 
 

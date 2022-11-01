@@ -33,6 +33,7 @@ import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
@@ -52,6 +53,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Boolean> editingModeEnabled = TwoWayBindableValue.create(Boolean.FALSE);
+
+    private BookContentView.PAGE_EDIT_MODE pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
     private Page emptyPage;
     private Page currentEditPage;
 
@@ -141,18 +144,27 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             }
         });
         selectedPage.onChanged().addListener(page -> {
+
+            boolean hasLeftEditingPage = (currentEditPage != null && page != currentEditPage);
+            if (hasLeftEditingPage) {
+                System.err.println("WARNING: Leaving edit page detected! --> Force abort editing!");
+                abortPageEdit(currentEditPage);
+            }
+
             if (Objects.nonNull(page)) {
                 System.out.println("selectedPage.onChanged() : id/title " + page.getId() + "/" + page.getTitle());
 
                 updateContentView(page);
-                WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
-                editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
-                bookContentView.setFocus();
+//                WikiPageManager.PageStatus pageStatus = pageManager.getPageStatus(page);
+//                editingModeEnabled.set((pageStatus.isLocked() && pageStatus.getEditor().equals(user)));
+//                bookContentView.setFocus();
             } else {
                 System.out.println("selectedPage.onChanged() : (null)");
 
                 updateContentView(emptyPage);
                 editingModeEnabled.set(false);
+                pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
+                bookContentView.setPageEditMode(pageEditMode);
             }
             updatePageTree();
         });
@@ -160,8 +172,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         editingModeEnabled.onChanged().addListener(enabled -> {
             System.out.println("editingModeEnabled.onChanged : enabled=" + enabled);
 
-            bookContentView.setPageEditMode(enabled ? BookContentView.PAGE_EDIT_MODE.CONTENT
-                                                    : BookContentView.PAGE_EDIT_MODE.OFF);
+//            bookContentView.setPageEditMode(enabled ? BookContentView.PAGE_EDIT_MODE.CONTENT
+//                                                    : BookContentView.PAGE_EDIT_MODE.OFF);
+            // ToDo kann entfernt werden (?)
         });
 
     }
@@ -181,7 +194,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         currentEditPage = createNewPage(selectedChapter.get());
         selectedPage.set(currentEditPage);
 
-        showPageSettingsWindow(currentEditPage);
+        editingModeEnabled.set(true);
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
+        bookContentView.setPageEditMode(pageEditMode);
+
+        showPageSettingsWindow(currentEditPage, this::onPageSettingsSaved, this::onPageSettingsCanceled);
     }
 
     private void onMovePageUpButtonClicked() {
@@ -200,6 +217,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onPageSaved");
         editingModeEnabled.set(false);
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
+        bookContentView.setPageEditMode(pageEditMode);
+
         Page page = selectedPage.get();
         page.setContent(pageContent);
         page.save();
@@ -212,13 +232,31 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private Page onPageEditCanceled() {
 
         System.out.println("onPageEditCanceled");
-        editingModeEnabled.set(false);
+//        editingModeEnabled.set(false);
         Page page = selectedPage.get();
+//        page.clearChanges();
+//        pageManager.unlockPage(page, user);
+//        currentEditPage = null;
+        abortPageEdit(page);
+
+        return page;
+    }
+
+    private void abortPageEdit(Page page) {
+
+        if (Objects.isNull(page)) {
+            System.err.println("   abortPageEdit : page is NULL; Ingore abort!");
+            return;
+        }
+
+        System.out.println("   abortPageEdit : page (id / title) - " + page.getId() + ", " + page.getTitle());
+        editingModeEnabled.set(false);
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
+        bookContentView.setPageEditMode(pageEditMode);
+
         page.clearChanges();
         pageManager.unlockPage(page, user);
         currentEditPage = null;
-
-        return page;
     }
 
     private void onPageEditClicked() {
@@ -230,11 +268,35 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void onEditPageSettingsClicked() {
 
-        bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
+        editingModeEnabled.set(true);
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
+        bookContentView.setPageEditMode(pageEditMode);
+
         currentEditPage = selectedPage.get();
-        showPageSettingsWindow(currentEditPage);
+        pageManager.lockPage(currentEditPage, user);
+        showPageSettingsWindow(currentEditPage, this::onPageSettingsSaved, this::onPageSettingsCanceled);
     }
 
+    private Void onPageSettingsSaved(Page modifiedPage) {
+
+        System.out.println("onPageSettingSaved");
+        pageManager.unlockPage(currentEditPage, user);
+        currentEditPage = null;
+        editingModeEnabled.set(false);
+        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
+        bookContentView.setPageEditMode(pageEditMode);
+
+        updateContentView();
+        updatePageTree();
+        selectedPage.set(modifiedPage); // update views
+
+        return null;
+    }
+    private void onPageSettingsCanceled() {
+
+        System.out.println("onPageSettingCanceled");
+        abortPageEdit(currentEditPage);
+    }
 
     private void editPage(Page page) {
 
@@ -251,6 +313,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)){
             editingModeEnabled.set(true); // switch on/off
+            pageEditMode = BookContentView.PAGE_EDIT_MODE.CONTENT;
+            bookContentView.setPageEditMode(pageEditMode);
+
             updateContentView(page);
         } else {
             CurrentSessionContext.get().showNotification(
@@ -260,7 +325,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
     }
 
-    private void showPageSettingsWindow(Page page) {
+    private void showPageSettingsWindow(Page page, Function<Page, Void> onPageSettingsSave, Runnable onPageSettingsCancel) {
 
         if (Objects.isNull(page)) {
             CurrentSessionContext.get().showNotification(EmojiIcon.WARNING, "Page creation failed!");
@@ -332,6 +397,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             okCancel.show();
             okCancel.onResult.addListener(isConfirmed -> {
                 if (isConfirmed) {
+                    // ToDo Unlock page
                     page.delete();
                     selectedPage.set(null);
                     bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
@@ -354,17 +420,18 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             page.setParent(page.equals(newParent) ? null : newParent);
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
-            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-            updateContentView();
-            updatePageTree();
-
-            selectedPage.set(page); // update views
+//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+//            updateContentView();
+//            updatePageTree();
+//            selectedPage.set(page); // update views
+            onPageSettingsSave.apply(page);
             formWindow.close();
         });
 
         cancelButton.onClick.addListener(() -> {
             System.out.println("  PageSettings.cancelButton.onClick");
-            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+//            bookContentView.setPageEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+            onPageSettingsCancel.run();
         });
 
         formWindow.show();
