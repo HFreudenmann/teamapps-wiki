@@ -12,6 +12,7 @@ import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
 import org.teamapps.ux.component.field.TextField;
 import org.teamapps.ux.component.field.combobox.ComboBox;
+import org.teamapps.ux.component.form.ResponsiveFormSection;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
@@ -41,6 +42,9 @@ public class PageSettingsForm {
     private ComboBox<EmojiIcon> emojiIconComboBox;
 
     private ComboBox<Page> pageComboBox;
+
+    ResponsiveFormSection deleteSection;
+    Button<BaseTemplateRecord> deleteButton;
 
     private Page page;
 
@@ -89,8 +93,8 @@ public class PageSettingsForm {
         formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
         formWindow.addField("Parent Page", pageComboBox);
 
-        Button<BaseTemplateRecord> deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
-        formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
+        deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
+        deleteSection = formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
         formWindow.getFormLayout().addLabelComponent(deleteButton);
         formWindow.addField("Delete page permanently", deleteButton);
 
@@ -104,14 +108,18 @@ public class PageSettingsForm {
         formWindow.close();
     }
 
-    public void show(Page editPage, ListTreeModel<Page> pageListModel) {
+    public void show(Page editPage, ListTreeModel<Page> pageListModel, boolean isNewPage) {
 
-        // ToDo : Form Window can be closed with the x-button. The behaviour of the x-button must be the same as the
-        //        cancel-button. But we can neither disable the x-button nor add a handler for the onClickedEvent.
-        //        Hence, if the user clicks the x-button instead of the cancel-button, the toolbar buttons are not
-        //        set to visible again!
+        this.page = editPage;
 
-        page = editPage;
+        boolean isDeleteButtonAvailable = !isNewPage;
+
+//  Workaround: deleteSection.setVisible has no effect in org.teamapps:teamapps-ux, v0.9.159!!!
+//       Hence we must set the delete button invisible and set deleteSection.setHideWhenNoVisibleFields(true).
+//        deleteSection.setVisible(isDeleteButtonAvailable);
+        deleteSection.setHideWhenNoVisibleFields(true);
+        deleteButton.setVisible(isDeleteButtonAvailable);
+
         pageListModel.setTreeNodeInfoFunction(getPageTreeNodeInfoFunction());
 
         pageTitleField.setValue(page.getTitle());
