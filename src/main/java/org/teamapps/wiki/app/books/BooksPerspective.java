@@ -2,7 +2,6 @@ package org.teamapps.wiki.app.books;
 
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
-import org.teamapps.application.server.system.session.PerspectiveSessionData;
 import org.teamapps.common.format.Color;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.icon.emoji.EmojiIcon;
@@ -23,9 +22,7 @@ public class BooksPerspective extends AbstractApplicationPerspective {
     private View booksView;
 
     public BooksPerspective(ApplicationInstanceData applicationInstanceData, MutableValue<String> perspectiveInfoBadgeValue) {
-        super(applicationInstanceData, perspectiveInfoBadgeValue);
-            PerspectiveSessionData perspectiveSessionData = (PerspectiveSessionData) getApplicationInstanceData();
-
+            super(applicationInstanceData, perspectiveInfoBadgeValue);
             createUi();
         }
 

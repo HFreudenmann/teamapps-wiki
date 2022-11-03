@@ -1,11 +1,11 @@
 package org.teamapps.wiki;
 
 import org.teamapps.application.api.password.SecurePasswordHash;
-import org.teamapps.application.server.system.utils.ValueConverterUtils;
-import org.teamapps.model.controlcenter.*;
+import org.teamapps.model.controlcenter.OrganizationUnit;
+import org.teamapps.model.controlcenter.OrganizationUnitType;
+import org.teamapps.model.controlcenter.User;
+import org.teamapps.model.controlcenter.UserAccountStatus;
 import org.teamapps.universaldb.index.translation.TranslatableText;
-
-import java.util.Arrays;
 
 public class AccountData {
     public static void createDemoData() {
@@ -31,7 +31,7 @@ public class AccountData {
                 .setLogin("admin")
                 .setPassword(SecurePasswordHash.createDefault().createSecureHash("teamapps!"))
                 .setUserAccountStatus(UserAccountStatus.SUPER_ADMIN)
-                .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr", "ru")))
+                .setLanguage("de")
                 .save();
         User.create()
                 .setFirstName("Demo")
@@ -39,20 +39,17 @@ public class AccountData {
                 .setLogin("demo")
                 .setPassword(SecurePasswordHash.createDefault().createSecureHash("demo!"))
                 .setUserAccountStatus(UserAccountStatus.ACTIVE)
-                .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "bg", "es")))
+                .setLanguage("en")
                 .save();
-/*
-            User.create()
-                    .setEmail("sunshine@mail.de")
-                    .setPhone("+49 3333 1234-56")
-                    .setLogin("helper")
-                    .setPassword(SecurePasswordHash.createDefault().createSecureHash("helper!"))
-                    .setUserAccountStatus(UserAccountStatus.ACTIVE)
-                    .setPrivateMessages(Message.create().setMessage("Please change your password!"))
-                    .setAllGroupMemberships(UserGroupMembership.create().setGroup(bookManager))
-                    .setLanguages(ValueConverterUtils.compressStringList(Arrays.asList("de", "en", "fr", "it", "es")))
-                    .save();
-*/
+        User.create()
+                .setEmail("sunshine@mail.de")
+                .setPhone("+49 3333 1234-56")
+                .setLogin("yves")
+                .setPassword(SecurePasswordHash.createDefault().createSecureHash("helper!"))
+                .setUserAccountStatus(UserAccountStatus.ACTIVE)
+                .setLanguage("fr")
+                .save();
+
         System.out.println("    # users created : " + User.getCount());
     }
 }

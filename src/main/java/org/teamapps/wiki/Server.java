@@ -1,7 +1,7 @@
 package org.teamapps.wiki;
 
 import org.teamapps.application.server.system.bootstrap.BootstrapSessionHandler;
-import org.teamapps.application.server.system.server.ApplicationServer;
+import org.teamapps.application.server.ApplicationServer;
 import org.teamapps.application.server.system.server.SessionRegistryHandler;
 import org.teamapps.application.server.system.session.UserSessionData;
 import org.teamapps.ux.session.SessionContext;
