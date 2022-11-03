@@ -186,7 +186,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         currentEditPage = createNewPage(selectedChapter.get());
         isCurrentEditPageNew = true;
         selectedPage.set(currentEditPage);
-
+        pageManager.lockPage(currentEditPage, user);
         pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
         bookContentView.setPageEditMode(pageEditMode);
 
