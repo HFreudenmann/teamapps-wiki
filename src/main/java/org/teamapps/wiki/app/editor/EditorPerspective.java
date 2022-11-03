@@ -250,6 +250,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         page.clearChanges();
         pageManager.unlockPage(page, user);
+        if (isCurrentEditPageNew) {
+            System.out.println("   DELETE page " + page.getId());
+            page.delete();
+            updatePageTree();
+        }
         currentEditPage = null;
         isCurrentEditPageNew = false;
     }
