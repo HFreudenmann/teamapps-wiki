@@ -268,7 +268,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         currentEditPage = selectedPage.get();
         pageManager.lockPage(currentEditPage, user);
-        showPageSettingsWindow(currentEditPage);
+        showPageSettingsWindow(currentEditPage, false);
     }
 
     private Void onPageSettingsSaved(Page modifiedPage) {
