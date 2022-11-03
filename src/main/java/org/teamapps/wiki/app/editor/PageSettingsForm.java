@@ -17,6 +17,7 @@ import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
 import org.teamapps.ux.component.tree.TreeNodeInfo;
 import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
+import org.teamapps.ux.component.window.Window;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
@@ -51,6 +52,14 @@ public class PageSettingsForm {
                        Runnable onPageSettingsPageDelete) {
 
         formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", applicationInstanceData);
+
+        Window window = formWindow.getWindow();
+        window.setModal(true);
+        window.setCloseable(false);
+        window.setMaximizable(true);
+        window.setCloseOnEscape(false);
+        window.setCloseOnClickOutside(false);
+        window.setModalBackgroundDimmingColor(Color.MATERIAL_BLUE_50);
 
         ToolbarButton saveButton = formWindow.addSaveButton();
         ToolbarButton cancelButton = formWindow.addCancelButton();
