@@ -28,7 +28,7 @@ public class BooksPerspective extends AbstractApplicationPerspective {
 
         private void createUi() {
             Perspective perspective = getPerspective();
-            booksView = perspective.addView(View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Content II", null));
+            booksView = perspective.addView(View.createView(ExtendedLayout.RIGHT, EmojiIcon.PAGE_FACING_UP, "Book list", null));
 
             booksView.getPanel().setBodyBackgroundColor(Color.LIGHT_GREEN.withAlpha(0.94f));
             booksView.getPanel().setPadding(20);
