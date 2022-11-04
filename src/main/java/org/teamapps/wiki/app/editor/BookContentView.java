@@ -15,14 +15,11 @@ import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class BookContentView {
 
     private View contentView;
     private VerticalLayout contentVerticalLayout;
-    private DisplayField contentTitleField;
-    private DisplayField contentDescriptionField;
     private RichTextEditor contentEditor;
 
     private DisplayField contentDisplay;
@@ -37,13 +34,12 @@ public class BookContentView {
 
     public enum PAGE_EDIT_MODE {
         OFF,
-        CONTENT,
-        SETTINGS
+        CONTENT
     }
 
     public void create(Perspective perspective,
-                       Function<String, Page> onPageContentSaveClicked,
-                       Supplier<Page> onPageContentCancelClicked,
+                       Function<String, Void> onPageContentSaveClicked,
+                       Runnable onPageContentCancelClicked,
                        Runnable onPageContentEditClicked,
                        Runnable onPageSettingsEditClicked) {
         createBookContentLayout();
@@ -54,15 +50,9 @@ public class BookContentView {
 
     public void setPageEditMode(PAGE_EDIT_MODE newEditMode) {
 
-        System.out.println("   BookContentView.setPageEditMode : " + pageEditMode + " -> " + newEditMode);
-
-        if (pageEditMode == PAGE_EDIT_MODE.OFF || newEditMode == PAGE_EDIT_MODE.OFF) {
-            this.pageEditMode = newEditMode;
-            setToolbarButtonVisibleState();
-        }
-        else {
-            System.err.println("   It's not allowed to change from edit mode " + pageEditMode + " to " + newEditMode);
-        }
+        System.out.println("   BCV.setPageEditMode : " + pageEditMode + " -> " + newEditMode);
+        this.pageEditMode = newEditMode;
+        setToolbarButtonVisibleState();
     }
 
 
@@ -76,19 +66,10 @@ public class BookContentView {
             return;
         }
 
-        System.out.println("   BookContentView.updateContentView : page " + page.getTitle());
+        System.out.println("   BCV.updateContentView");
 
         contentView.getPanel().setTitle(page.getTitle());
         contentView.getPanel().setIcon(WikiUtils.getIconFromName(page.getEmoji()));
-        contentTitleField.setValue("<h1>" + page.getTitle() + "</h1>");
-
-        String description = page.getDescription();
-        if (description != null) {
-            contentDescriptionField.setValue("<p>" + description + "</p>");
-            contentDescriptionField.setVisible(true);
-        } else {
-            contentDescriptionField.setVisible(false);
-        }
 
         if (pageEditMode == PAGE_EDIT_MODE.CONTENT) {
             contentEditor.setValue(page.getContent());
@@ -111,7 +92,8 @@ public class BookContentView {
             StringBuilder contentBlockBuilder = new StringBuilder();
             page.getContentBlocks().forEach(contentBlock -> {
                 switch (contentBlock.getContentBlockType()) {
-                    case RICH_TEXT -> {
+                    case RICH_TEXT -> //noinspection RedundantLabeledSwitchRuleCodeBlock
+                    {
                         contentBlockBuilder.append(contentBlock.getValue());
                     }
                 }
@@ -124,14 +106,6 @@ public class BookContentView {
     private void createBookContentLayout() {
 
         contentVerticalLayout = new VerticalLayout();
-
-        contentTitleField = new DisplayField();
-        contentTitleField.setShowHtml(true);
-        contentVerticalLayout.addComponent(contentTitleField);
-
-        contentDescriptionField = new DisplayField();
-        contentDescriptionField.setShowHtml(true);
-        contentVerticalLayout.addComponent(contentDescriptionField);
 
         contentEditor = new RichTextEditor();
         contentEditor.setEditingMode(FieldEditingMode.DISABLED);
@@ -160,7 +134,8 @@ public class BookContentView {
     }
 
     private void createBookContentView(Perspective perspective,
-                                       Function<String, Page> onPageContentSave, Supplier<Page> onPageContentCancel,
+                                       Function<String, Void> onPageContentSave,
+                                       Runnable onPageContentCancel,
                                        Runnable onPageContentEdit,
                                        Runnable onPageSettingsEdit) {
 
@@ -174,28 +149,30 @@ public class BookContentView {
         ToolbarButtonGroup buttonGroup = contentView.addLocalButtonGroup(new ToolbarButtonGroup());
 
         saveButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CHECK_MARK_BUTTON, "Save Changes"));
-        saveButton.setVisible(false);
         saveButton.onClick.addListener(() -> {
-            System.out.println("saveButton.onClick");
-
-            Page savedPage = onPageContentSave.apply(contentEditor.getValue());
-            updateContentView(savedPage);
+            System.out.println("BookContentView.saveButton.onClick");
+            onPageContentSave.apply(contentEditor.getValue());
         });
 
         cancelButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.CROSS_MARK, "Discard Changes"));
-        cancelButton.setVisible(false);
         cancelButton.onClick.addListener(() -> {
-            System.out.println("cancelButton.onClick");
-
-            Page originalPage = onPageContentCancel.get();
-            updateContentView(originalPage);
+            System.out.println("BookContentView.cancelButton.onClick");
+            onPageContentCancel.run();
         });
 
         editButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.MEMO, "Edit Page Content"));
-        editButton.onClick.addListener(onPageContentEdit);
+        editButton.onClick.addListener(() -> {
+            System.out.println("BookContentView.editButton.onClick");
+            onPageContentEdit.run();
+        });
 
         editPageSettingsButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.WRENCH, "Edit Page Settings"));
-        editPageSettingsButton.onClick.addListener(onPageSettingsEdit);
+        editPageSettingsButton.onClick.addListener(() -> {
+            System.out.println("BookContentView.editButton.onClick");
+            onPageSettingsEdit.run();
+        });
+
+        setPageEditMode(PAGE_EDIT_MODE.OFF);
     }
 
 
@@ -211,12 +188,6 @@ public class BookContentView {
             case CONTENT -> {
                 saveButton.setVisible(true);
                 cancelButton.setVisible(true);
-                editButton.setVisible(false);
-                editPageSettingsButton.setVisible(false);
-            }
-            case SETTINGS -> {
-                saveButton.setVisible(false);
-                cancelButton.setVisible(false);
                 editButton.setVisible(false);
                 editPageSettingsButton.setVisible(false);
             }

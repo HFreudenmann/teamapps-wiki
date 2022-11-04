@@ -15,12 +15,14 @@ public class WikiPageManager {
             System.err.println("   Try to lock page = NULL");
         }
         if (Objects.isNull(editor)) {
+            // ToDo possible NullPointerException
             System.err.println("   Try to lock page = " + page.getTitle() + " with editor = NULL");
         }
         // ToDo Handle errors : page or editor == NULL
         System.out.println("   lock page = " + page.getId());
 
-        editor.getSessionContext().onDestroyed.addListener(() -> unlockPage(page, editor)); // TODO: onLogout ?
+        // TODO: Beim Logout nur offene Locks freigeben, anstatt pauschal alle bisher gesetzten
+        editor.getSessionContext().onDestroyed.addListener(() -> unlockPage(page, editor));
         return pageStatusHashMap.computeIfAbsent(page, page1 -> new PageStatus(true, editor));
     }
 
