@@ -83,9 +83,7 @@ public class BookNavigationView {
         chapterComboBox.setValue(chapter);
     }
 
-    public void setSelectedPage(Page selectedPage) {
-        pageTree.setSelectedNode(selectedPage);
-    }
+    public void setSelectedPage(Page selectedPage) { pageTree.setSelectedNode(selectedPage); }
 
 
     private void createNavigationLayout(ListTreeModel<Book> bookModel,
@@ -121,6 +119,7 @@ public class BookNavigationView {
         treePanel.setContent(pageTree);
         treePanel.setHideTitleBar(true);
         treePanel.setStretchContent(true);
+        treePanel.setBodyBackgroundColor(Color.MATERIAL_LIGHT_BLUE_A100.withAlpha(0.30f));
 
         layout.addComponent(new Label("Books:"));
         layout.addComponent(bookComboBox);
