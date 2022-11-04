@@ -8,8 +8,10 @@ import org.teamapps.common.format.Color;
 import org.teamapps.data.extract.PropertyProvider;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
+import org.teamapps.ux.component.absolutelayout.Length;
 import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
+import org.teamapps.ux.component.field.MultiLineTextField;
 import org.teamapps.ux.component.field.TextField;
 import org.teamapps.ux.component.field.combobox.ComboBox;
 import org.teamapps.ux.component.form.ResponsiveFormSection;
@@ -36,11 +38,12 @@ public class PageSettingsForm {
     private FormWindow formWindow;
 
     private TextField pageTitleField;
-    private TextField pageDescriptionField;
+    private MultiLineTextField pageDescriptionField;
     private ComboBox<EmojiIcon> emojiIconComboBox;
     private ComboBox<Page> pageComboBox;
 
     ResponsiveFormSection deleteSection;
+    @SuppressWarnings("rawtypes")
     Button<BaseTemplateRecord> deleteButton;
 
     private Page page;
@@ -66,7 +69,12 @@ public class PageSettingsForm {
         ToolbarButton cancelButton = formWindow.addCancelButton();
 
         pageTitleField = new TextField();
-        pageDescriptionField = new TextField();
+        pageDescriptionField = new MultiLineTextField();
+        pageDescriptionField.setMaxCharacters(999);
+        pageDescriptionField.setShowClearButton(true);
+        // ToDo Bugfix: MultiLineTextField.setMinHeight increases the label height but not the TextField height !!
+        pageDescriptionField.setMinHeight(new Length(80));
+        pageDescriptionField.setMaxHeight(new Length(400));
 
         emojiIconComboBox = new ComboBox<>();
         emojiIconComboBox.setModel(getEmojiIconComboBoxModel());
