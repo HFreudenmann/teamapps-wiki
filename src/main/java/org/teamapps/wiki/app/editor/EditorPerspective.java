@@ -87,6 +87,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null));
         selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
 
+        // ToDo Ursache finden und beseitigen
         if (selectedPage.get() == null) {
             // If the initial loaded book or chapter has no pages, then the content view seems to be in edit mode (wrong background colour).
             // Displaying an empty page changes to the correct background color.
