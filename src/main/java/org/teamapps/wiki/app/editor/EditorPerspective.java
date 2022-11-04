@@ -164,7 +164,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
                 bookContentView.setPageEditMode(pageEditMode);
             }
-            updatePageTree();
+//            updatePageTree();
         });
 
     }
@@ -187,8 +187,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         isCurrentEditPageNew = true;
         selectedPage.set(currentEditPage);
         pageManager.lockPage(currentEditPage, user);
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
-        bookContentView.setPageEditMode(pageEditMode);
+//        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
 
         showPageSettingsWindow(currentEditPage, isCurrentEditPageNew);
     }
@@ -197,39 +196,42 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onMovePageUpButtonClicked");
         reorderPage(selectedPage.get(), true);
+        updatePageTree();
     }
 
     private void onMovePageDownButtonClicked() {
 
         System.out.println("onMovePageDownButtonClicked");
         reorderPage(selectedPage.get(), false);
+        updatePageTree();
     }
 
 
-    private Page onPageContentSaved(String pageContent) {
+    private Void onPageContentSaved(String pageContent) {
 
         System.out.println("onPageContentSaved");
-
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
-        bookContentView.setPageEditMode(pageEditMode);
 
         Page page = selectedPage.get();
         page.setContent(pageContent);
         page.save();
+
+        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
+        updateContentView(page);
+
         pageManager.unlockPage(page, user);
         currentEditPage = null;
 
-        return page;
+        return null;
     }
 
-    private Page onPageContentCanceled() {
+
+    private void onPageContentCanceled() {
 
         System.out.println("onPageEditCanceled");
 
-        Page page = selectedPage.get();
-        abortPageEdit(page);
-
-        return page;
+        Page originalPage = selectedPage.get();
+        abortPageEdit(originalPage);
+        updateContentView(originalPage);
     }
 
     private void abortPageEdit(Page page) {
@@ -241,12 +243,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("   abortPageEdit : page (id / title) - " + page.getId() + ", " + page.getTitle());
 
-        if (pageEditMode == BookContentView.PAGE_EDIT_MODE.SETTINGS) {
-            pageSettingsForm.close();
-        }
+//        if (pageEditMode == BookContentView.PAGE_EDIT_MODE.SETTINGS) {
+//            pageSettingsForm.close();
+//        }
 
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
-        bookContentView.setPageEditMode(pageEditMode);
+        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
         page.clearChanges();
         pageManager.unlockPage(page, user);
@@ -268,10 +269,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void onEditPageSettingsClicked() {
 
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.SETTINGS;
-        bookContentView.setPageEditMode(pageEditMode);
-
         currentEditPage = selectedPage.get();
+        if (Objects.isNull(currentEditPage)) {
+            System.err.println("onEditPageSettingsClicked: Cannot edit NULL page!");
+            return;
+        }
+//        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
+
         pageManager.lockPage(currentEditPage, user);
         showPageSettingsWindow(currentEditPage, false);
     }
@@ -283,12 +287,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         currentEditPage = null;
         isCurrentEditPageNew = false;
 
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
-        bookContentView.setPageEditMode(pageEditMode);
+        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
+        selectedPage.set(modifiedPage); // update views
         updateContentView();
         updatePageTree();
-        selectedPage.set(modifiedPage); // update views
 
         return null;
     }
@@ -303,14 +306,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onPageSettingsPageDeleted");
         pageManager.unlockPage(currentEditPage, user);
+        // ToDo: Cascading delete; currently children are lifted up one level
         currentEditPage.delete();
         currentEditPage = null;
         isCurrentEditPageNew = false;
 
-        pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
-        bookContentView.setPageEditMode(pageEditMode);
+        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
         selectedPage.set(null);
+        updatePageTree();
     }
 
     private void editPage(Page page) {
@@ -328,8 +332,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
         if (pageStatus.getEditor().equals(user)) {
 
-            pageEditMode = BookContentView.PAGE_EDIT_MODE.CONTENT;
-            bookContentView.setPageEditMode(pageEditMode);
+            setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.CONTENT);
 
             updateContentView(page);
         } else {
@@ -376,6 +379,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         pageModel.setRecords(getReOrderedPages(selectedChapter.get()));
         logPageList(pageModel);
         bookNavigationView.setSelectedPage(selectedPage.get());
+    }
+
+    private void setContentViewEditMode(BookContentView.PAGE_EDIT_MODE editMode) {
+        pageEditMode = editMode;
+        bookContentView.setPageEditMode(pageEditMode);
     }
 
     private void logPageList(ListTreeModel<Page> pageTreeModel) {
@@ -441,8 +449,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private Page createNewPage(Chapter chapter) {
 
-        if (chapter == null) {
-            System.err.println("createNewPage : chapter == null");
+        if (Objects.isNull(chapter)) {
+            System.err.println("createNewPage : chapter is NULL");
             return null;
         }
 
@@ -450,7 +458,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         Page newPage = Page.create();
 
-        if (selectedPage.get() == null) {
+        if (Objects.isNull(selectedPage.get())) {
             newPage.setParent(null);
         } else {
             newPage.setParent(selectedPage.get().getParent());
@@ -513,7 +521,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             Collections.swap(pageList, pos, newPos);
             parent.setChildren(pageList).save();
         }
-        updatePageTree();
     }
+
 
 }

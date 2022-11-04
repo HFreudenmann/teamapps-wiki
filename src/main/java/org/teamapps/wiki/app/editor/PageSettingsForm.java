@@ -28,7 +28,6 @@ import org.teamapps.wiki.model.wiki.Page;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,9 +37,7 @@ public class PageSettingsForm {
 
     private TextField pageTitleField;
     private TextField pageDescriptionField;
-
     private ComboBox<EmojiIcon> emojiIconComboBox;
-
     private ComboBox<Page> pageComboBox;
 
     ResponsiveFormSection deleteSection;
@@ -63,7 +60,7 @@ public class PageSettingsForm {
         window.setMaximizable(true);
         window.setCloseOnEscape(false);
         window.setCloseOnClickOutside(false);
-        window.setModalBackgroundDimmingColor(Color.MATERIAL_BLUE_50);
+        window.setModalBackgroundDimmingColor(Color.MATERIAL_BLUE_100.withAlpha(0.4f));
 
         ToolbarButton saveButton = formWindow.addSaveButton();
         ToolbarButton cancelButton = formWindow.addCancelButton();
@@ -93,10 +90,11 @@ public class PageSettingsForm {
         formWindow.addSection(EmojiIcon.CARD_INDEX_DIVIDERS, "Placement");
         formWindow.addField("Parent Page", pageComboBox);
 
-        deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE").setColor(Color.MATERIAL_RED_600);
-        deleteSection = formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Danger Zone").setCollapsed(true);
-        formWindow.getFormLayout().addLabelComponent(deleteButton);
-        formWindow.addField("Delete page permanently", deleteButton);
+        deleteSection = formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Delete page").setCollapsed(true);
+        deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE PERMANENTLY").setColor(Color.MATERIAL_ORANGE_600);
+        formWindow.addField("", deleteButton);
+//      Alternative: left adjusted position of the button without (empty) label
+//        formWindow.getFormLayout().addLabelComponent(deleteButton);
 
         deleteButton.onClicked.addListener(onDeletePageClicked(onPageSettingsPageDelete));
         saveButton.onClick.addListener(onSavePageClicked(onPageSettingsSave));
@@ -105,18 +103,22 @@ public class PageSettingsForm {
 
 
     public void close() {
+        System.out.println("   PSF.close");
         formWindow.close();
     }
 
     public void show(Page editPage, ListTreeModel<Page> pageListModel, boolean isNewPage) {
 
+        System.out.println("   PSF.show");
         this.page = editPage;
 
         boolean isDeleteButtonAvailable = !isNewPage;
 
-//  Workaround: deleteSection.setVisible has no effect in org.teamapps:teamapps-ux, v0.9.159!!!
-//       Hence we must set the delete button invisible and set deleteSection.setHideWhenNoVisibleFields(true).
-//        deleteSection.setVisible(isDeleteButtonAvailable);
+//      WORKAROUND:
+//         deleteSection.setVisible has no effect in org.teamapps:teamapps-ux, v0.9.159!!!
+//         Hence we must set the delete button invisible and set deleteSection.setHideWhenNoVisibleFields(true) in order
+//         to hide the delete section.
+//      deleteSection.setVisible(isDeleteButtonAvailable);
         deleteSection.setHideWhenNoVisibleFields(true);
         deleteButton.setVisible(isDeleteButtonAvailable);
 
@@ -136,14 +138,12 @@ public class PageSettingsForm {
     @NotNull
     private Runnable onDeletePageClicked(Runnable onPageSettingsPageDelete) {
         return () -> {
-            System.out.println("  PageSettings.deleteButton.onClick");
+            System.out.println("PSF.onDeletePageClicked");
 
-            // ToDo: Cascading delete; currently children are lifted up one level
             Dialogue okCancel = Dialogue.createOkCancel(
                     EmojiIcon.WARNING,
-                    "Permanently delete page \"" + page.getTitle() + "\"?",
-                    "Do you really want to delete this page?");
-
+                    "Delete confirmation",
+                    "Page: '" + page.getTitle() +  "'<br>Do you really want to DELETE this page PERMANENTLY?");
             okCancel.show();
             okCancel.onResult.addListener(isConfirmed -> {
                 if (isConfirmed) {
@@ -158,21 +158,21 @@ public class PageSettingsForm {
     private Runnable onSavePageClicked(Function<Page, Void>  onPageSettingsSave) {
 
         return () -> {
-            System.out.println("  PageSettings.saveButton.onClick");
+            System.out.println("PSF.onSavePageClicked");
 
             page.setTitle(pageTitleField.getValue());
             page.setDescription(pageDescriptionField.getValue());
 
             Page newParent = pageComboBox.getValue();
             if (WikiUtils.isChildPage(newParent, page)) {
-                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent");
+                CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent will be ignored!");
                 newParent = page.getParent();
             }
             page.setParent(page.equals(newParent) ? null : newParent);
             page.setEmoji(emojiIconComboBox.getValue() != null ? emojiIconComboBox.getValue().getUnicode() : null);
             page.save();
-            onPageSettingsSave.apply(page);
 
+            onPageSettingsSave.apply(page);
             formWindow.close();
         };
     }
@@ -180,7 +180,7 @@ public class PageSettingsForm {
     @NotNull
     private Runnable onCancelPageClicked(Runnable onPageSettingsCancel) {
         return () -> {
-            System.out.println("  PageSettings.cancelButton.onClick");
+            System.out.println("PSF.onCancelPageClicked");
             onPageSettingsCancel.run();
         };
     }
@@ -225,13 +225,16 @@ public class PageSettingsForm {
 
         return (s) -> iconList.stream()
                 .filter(emojiIcon -> s == null || StringUtils.containsIgnoreCase(emojiIcon.getIconId(), s))
-                .limit(100)
+                .limit(70)
                 .collect(Collectors.toList());
     }
 
     @NotNull
     private Function<Page, TreeNodeInfo> getPageTreeNodeInfoFunction() {
-        return p -> new TreeNodeInfoImpl<>(p.getParent(), true, true, false);
+
+        return p -> {
+            // System.out.println("   PSF.getPageTreeNodeInfoFunction : page [" + p.getId() + "]");
+            return new TreeNodeInfoImpl<>(p.getParent(), true, true, false);};
     }
 
 }
