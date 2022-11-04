@@ -12,7 +12,6 @@ import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.component.template.BaseTemplate;
-import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
 import org.teamapps.wiki.app.WikiApplicationBuilder;
@@ -44,7 +43,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private final TwoWayBindableValue<Chapter> selectedChapter = TwoWayBindableValue.create();
     private final TwoWayBindableValue<Page> selectedPage = TwoWayBindableValue.create();
 
-    private BookContentView.PAGE_EDIT_MODE pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
     private Page emptyPage;
     private Page currentEditPage;
 
@@ -108,9 +106,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         chapterModel = new ListTreeModel<Chapter>(Collections.EMPTY_LIST);
         //noinspection unchecked
         pageModel = new ListTreeModel<Page>(Collections.EMPTY_LIST);
-        pageModel.setTreeNodeInfoFunction(
-                page -> new TreeNodeInfoImpl<>(page.getParent(), WikiUtils.getPageLevel(page) == 0,
-                        true, false));
+        pageModel.setTreeNodeInfoFunction(WikiUtils.getPageTreeNodeInfoFunction());
     }
 
     private void initializeTwoWayBindables() {
@@ -162,10 +158,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("selectedPage.onChanged() : (null)");
 
                 updateContentView(emptyPage);
-                pageEditMode = BookContentView.PAGE_EDIT_MODE.OFF;
-                bookContentView.setPageEditMode(pageEditMode);
+//                setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
             }
-//            updatePageTree();
         });
 
     }
@@ -188,7 +182,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         isCurrentEditPageNew = true;
         selectedPage.set(currentEditPage);
         pageManager.lockPage(currentEditPage, user);
-//        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
 
         showPageSettingsWindow(currentEditPage, isCurrentEditPageNew);
     }
@@ -244,10 +237,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("   abortPageEdit : page (id / title) - " + page.getId() + ", " + page.getTitle());
 
-//        if (pageEditMode == BookContentView.PAGE_EDIT_MODE.SETTINGS) {
-//            pageSettingsForm.close();
-//        }
-
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
         page.clearChanges();
@@ -275,7 +264,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.err.println("onEditPageSettingsClicked: Cannot edit NULL page!");
             return;
         }
-//        setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.SETTINGS);
 
         pageManager.lockPage(currentEditPage, user);
         showPageSettingsWindow(currentEditPage, false);
@@ -383,8 +371,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void setContentViewEditMode(BookContentView.PAGE_EDIT_MODE editMode) {
-        pageEditMode = editMode;
-        bookContentView.setPageEditMode(pageEditMode);
+        bookContentView.setPageEditMode(editMode);
     }
 
     private void logPageList(ListTreeModel<Page> pageTreeModel) {
