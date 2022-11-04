@@ -443,7 +443,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         if (Objects.isNull(selectedPage.get())) {
             newPage.setParent(null);
         } else {
-            newPage.setParent(selectedPage.get().getParent());
+            newPage.setParent(selectedPage.get());
         }
 
         return newPage
