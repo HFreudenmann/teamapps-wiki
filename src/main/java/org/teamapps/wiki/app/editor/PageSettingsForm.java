@@ -22,6 +22,7 @@ import org.teamapps.ux.component.window.Window;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
+import org.teamapps.wiki.app.PageTreeUtils;
 import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.Page;
 
@@ -170,7 +171,7 @@ public class PageSettingsForm {
             page.setDescription(pageDescriptionField.getValue());
 
             Page newParent = pageComboBox.getValue();
-            if (WikiUtils.isChildPage(newParent, page)) {
+            if (PageTreeUtils.isChildPage(newParent, page)) {
                 CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent will be ignored!");
                 newParent = page.getParent();
             }
@@ -197,7 +198,7 @@ public class PageSettingsForm {
         return (page, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
 
-            Icon pageIcon;
+            Icon<EmojiIcon, ?> pageIcon;
             String emoji = page.getEmoji();
             if (emoji != null) {
                 pageIcon = EmojiIcon.forUnicode(emoji);
