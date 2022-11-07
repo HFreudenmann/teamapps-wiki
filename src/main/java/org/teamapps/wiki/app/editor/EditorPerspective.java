@@ -288,7 +288,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 //        System.out.println("   onPageSettingSaved");
         pageManager.unlockPage(currentEditPage, user);
         currentEditPage = null;
-        isCurrentEditPageNew = false;//
+        isCurrentEditPageNew = false;
 
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
