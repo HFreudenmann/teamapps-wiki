@@ -18,12 +18,11 @@ import org.teamapps.ux.component.form.ResponsiveFormSection;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.component.template.BaseTemplateRecord;
 import org.teamapps.ux.component.toolbar.ToolbarButton;
-import org.teamapps.ux.component.tree.TreeNodeInfo;
-import org.teamapps.ux.component.tree.TreeNodeInfoImpl;
 import org.teamapps.ux.component.window.Window;
 import org.teamapps.ux.model.ComboBoxModel;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.ux.session.CurrentSessionContext;
+import org.teamapps.wiki.app.PageTreeUtils;
 import org.teamapps.wiki.app.WikiUtils;
 import org.teamapps.wiki.model.wiki.Page;
 
@@ -89,7 +88,7 @@ public class PageSettingsForm {
         pageComboBox.setShowClearButton(true);
         pageComboBox.setRecordToStringFunction(chapter -> chapter.getTitle() + " - " + chapter.getDescription());
 
-        pageListModel.setTreeNodeInfoFunction(getPageTreeNodeInfoFunction());
+        pageListModel.setTreeNodeInfoFunction(WikiUtils.getPageTreeNodeInfoFunction());
 
         formWindow.addSection();
         formWindow.addField("Page Icon", emojiIconComboBox);
@@ -130,7 +129,7 @@ public class PageSettingsForm {
         deleteSection.setHideWhenNoVisibleFields(true);
         deleteButton.setVisible(isDeleteButtonAvailable);
 
-        pageListModel.setTreeNodeInfoFunction(getPageTreeNodeInfoFunction());
+        pageListModel.setTreeNodeInfoFunction(WikiUtils.getPageTreeNodeInfoFunction());
 
         pageTitleField.setValue(page.getTitle());
         pageDescriptionField.setValue(page.getDescription());
@@ -172,7 +171,7 @@ public class PageSettingsForm {
             page.setDescription(pageDescriptionField.getValue());
 
             Page newParent = pageComboBox.getValue();
-            if (WikiUtils.isChildPage(newParent, page)) {
+            if (PageTreeUtils.isChildPage(newParent, page)) {
                 CurrentSessionContext.get().showNotification(EmojiIcon.PROHIBITED, "Invalid new Parent will be ignored!");
                 newParent = page.getParent();
             }
@@ -199,7 +198,7 @@ public class PageSettingsForm {
         return (page, propertyNames) -> {
             Map<String, Object> map = new HashMap<>();
 
-            Icon pageIcon;
+            Icon<EmojiIcon, ?> pageIcon;
             String emoji = page.getEmoji();
             if (emoji != null) {
                 pageIcon = EmojiIcon.forUnicode(emoji);
@@ -235,14 +234,6 @@ public class PageSettingsForm {
                 .filter(emojiIcon -> s == null || StringUtils.containsIgnoreCase(emojiIcon.getIconId(), s))
                 .limit(70)
                 .collect(Collectors.toList());
-    }
-
-    @NotNull
-    private Function<Page, TreeNodeInfo> getPageTreeNodeInfoFunction() {
-
-        return p -> {
-            // System.out.println("   PSF.getPageTreeNodeInfoFunction : page [" + p.getId() + "]");
-            return new TreeNodeInfoImpl<>(p.getParent(), true, true, false);};
     }
 
 }
