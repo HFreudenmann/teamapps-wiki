@@ -66,7 +66,7 @@ public class BookContentView {
             return;
         }
 
-        System.out.println("   BCV.updateContentView");
+        // System.out.println("   BCV.updateContentView");
 
         contentView.getPanel().setTitle(page.getTitle());
         contentView.getPanel().setIcon(WikiUtils.getIconFromName(page.getEmoji()));

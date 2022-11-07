@@ -283,7 +283,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private Void onPageSettingsSaved(Page modifiedPage) {
 
-        System.out.println("onPageSettingSaved");
+//        System.out.println("onPageSettingSaved");
         pageManager.unlockPage(currentEditPage, user);
         currentEditPage = null;
         isCurrentEditPageNew = false;
@@ -299,7 +299,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void onPageSettingsCanceled() {
 
-        System.out.println("onPageSettingCanceled");
+//        System.out.println("onPageSettingCanceled");
         abortPageEdit(currentEditPage);
     }
 
