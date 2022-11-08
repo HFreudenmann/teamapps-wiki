@@ -14,8 +14,7 @@ public class WikiPageManager {
     public void addReleaseUserLockListener(SessionUser editor) {
         System.out.println("addReleaseUserLockListener : " + editor.getName(false));
         editor.getSessionContext().onDestroyed.addListener(() -> releaseLocksFor(editor));
-        // TODO
-//        editor.onUserLogout().addListener(() -> releaseLocksFor(editor));
+        editor.onUserLogout().addListener(() -> releaseLocksFor(editor));
     }
 
     public LockSuccessStatus lockPage(Page page, SessionUser editor) {
