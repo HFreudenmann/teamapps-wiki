@@ -16,12 +16,33 @@ public class BaseData {
             return;
         }
 
+        createTeamAppsDemoBook();
         createLatinDemoBook();
         createUbuntuDemoBook();
         createCarnegieDemoBook();
         createEmptyBooks();
 
         System.out.println("    # books created : " + Book.getCount());
+    }
+
+    private static void createTeamAppsDemoBook() {
+        Book demoBook = Book.create().setTitle("TeamApps")
+                .setDescription("Web development kit")
+                .save();
+
+        Chapter chapter1 = Chapter.create()
+                .setBook(demoBook)
+                .setTitle("Github").setDescription("Web site of the project on Github")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("").setDescription("")
+                .setContent("<p>...<br>" +
+                        "Link to the web site:<br>" +
+                        "   <a href=\"https://github.com/teamapps-org\">https://github.com/teamapps-org</a><br>" +
+                        "     (click Ctrl + Enter to open the link in a new tab in Firefox)</p>"
+                )
+                .save();
     }
 
     private static void createLatinDemoBook() {
@@ -115,7 +136,16 @@ public class BaseData {
                 .setBook(demoBook)
                 .setTitle("Getting Started").setDescription("")
                 .save();
-
+        Page.create()
+                .setChapter(chapter1)
+                .setTitle("Overview").setDescription("Overview of the installation")
+                .setContent("<p>...<br>" +
+                            "Link to the installation guide:<br>" +
+                            "   <a href=\"https://ubuntu.com/tutorials/install-ubuntu-server#1-overview\">" +
+                                      "https://ubuntu.com/tutorials/install-ubuntu-server#1-overview</a><br>" +
+                            "     (click Ctrl + Enter to open the link in a new tab in Firefox)</p>"
+                )
+                .save();
         Page.create()
                 .setChapter(chapter1)
                 .setTitle("Basic Installation").setDescription("How to install Ubuntu Server Edition")
