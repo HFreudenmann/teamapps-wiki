@@ -98,7 +98,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             // Displaying an empty page changes to the correct background color.
             updateContentView(emptyPage);
         }
-
     }
 
 
