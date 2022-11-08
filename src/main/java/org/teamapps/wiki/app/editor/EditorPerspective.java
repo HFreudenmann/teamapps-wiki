@@ -1,17 +1,12 @@
 package org.teamapps.wiki.app.editor;
 
-import org.jetbrains.annotations.NotNull;
 import org.teamapps.application.api.application.ApplicationInstanceData;
 import org.teamapps.application.api.application.perspective.AbstractApplicationPerspective;
 import org.teamapps.application.api.user.SessionUser;
 import org.teamapps.application.server.system.session.PerspectiveSessionData;
-import org.teamapps.data.extract.PropertyProvider;
 import org.teamapps.databinding.MutableValue;
 import org.teamapps.databinding.TwoWayBindableValue;
-import org.teamapps.icon.emoji.EmojiIcon;
-import org.teamapps.icons.Icon;
 import org.teamapps.ux.application.perspective.Perspective;
-import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.model.ListTreeModel;
 import org.teamapps.wiki.app.*;
 import org.teamapps.wiki.model.wiki.Book;
@@ -19,8 +14,6 @@ import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class EditorPerspective extends AbstractApplicationPerspective {
@@ -230,7 +223,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void abortPageEdit(Page page) {
 
         if (Objects.isNull(page)) {
-            System.err.println("   abortPageEdit : page is NULL; Ingore abort!");
+            System.err.println("   abortPageEdit : page is NULL; Ingnore abort!");
             return;
         }
 
@@ -321,7 +314,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         isCurrentEditPageNew = false;
 
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-        // ToDo erste Seite auswählen, und ContenView aktualisieren
+        // ToDo erste Seite auswählen, und ContentView aktualisieren
         selectedPage.set(null);
         updatePageTree();
     }
@@ -390,27 +383,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
 
         return isSuccessful;
-    }
-
-
-    @NotNull
-    private PropertyProvider<Page> getPagePropertyProvider() {
-
-        return (page, propertyNames) -> {
-            Map<String, Object> map = new HashMap<>();
-
-            Icon<EmojiIcon, ?> pageIcon;
-            String emoji = page.getEmoji();
-            if (emoji != null) {
-                pageIcon = EmojiIcon.forUnicode(emoji);
-            } else {
-                pageIcon = EmojiIcon.PAGE_FACING_UP;
-            }
-            map.put(BaseTemplate.PROPERTY_ICON, pageIcon);
-            map.put(BaseTemplate.PROPERTY_CAPTION, page.getTitle());
-            map.put(BaseTemplate.PROPERTY_DESCRIPTION, page.getDescription());
-            return map;
-        };
     }
 
     private Page createNewPage(Chapter chapter) {
