@@ -3,78 +3,125 @@ package org.teamapps.wiki.app;
 import org.teamapps.application.api.user.SessionUser;
 import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class WikiPageManager {
-    private final ConcurrentHashMap<Page, PageStatus> pageStatusHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Page, LockDetails> pageLockHashMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<SessionUser, HashSet<Page>> userLockHashMap = new ConcurrentHashMap<>();
 
-    public PageStatus lockPage(Page page, SessionUser editor) {
+    public void addReleaseUserLockListener(SessionUser editor) {
+        System.out.println("addReleaseUserLockListener : " + editor.getName(false));
+        editor.getSessionContext().onDestroyed.addListener(() -> releaseLocksFor(editor));
+        // TODO
+//        editor.onUserLogout().addListener(() -> releaseLocksFor(editor));
+    }
+
+    public LockSuccessStatus lockPage(Page page, SessionUser editor) {
+
+        LockSuccessStatus lockStatus;
+
         if (Objects.isNull(page)) {
             System.err.println("   Try to lock page = NULL");
+            return new LockSuccessStatus(LockFailReason.INVALID_INPUT);
         }
         if (Objects.isNull(editor)) {
-            // ToDo possible NullPointerException
-            System.err.println("   Try to lock page = " + page.getTitle() + " with editor = NULL");
+            System.err.println("   Try to lock page = " + page.getId() + " with editor = NULL");
+            return new LockSuccessStatus(LockFailReason.INVALID_INPUT);
         }
-        // ToDo Handle errors : page or editor == NULL
-        System.out.println("   lock page = " + page.getId());
 
-        // TODO: Beim Logout nur offene Locks freigeben, anstatt pauschal alle bisher gesetzten
-        editor.getSessionContext().onDestroyed.addListener(() -> unlockPage(page, editor));
-        return pageStatusHashMap.computeIfAbsent(page, page1 -> new PageStatus(true, editor));
+        System.out.println("   lock page = " + page.getId());
+        if (pageLockHashMap.containsKey(page)) {
+            LockDetails existingLock = pageLockHashMap.get(page);
+
+            if (editor.equals(existingLock.getLockOwner())) {
+                System.err.println("Try repeatedly to lock by user : " + editor.getName(false));
+                return new LockSuccessStatus(editor);
+            } else {
+                return new LockSuccessStatus(existingLock);
+            }
+        } else {
+            LockSuccessStatus successfulLockStatus = new LockSuccessStatus(editor);
+            pageLockHashMap.put(page, successfulLockStatus.getLockDetails());
+            addPageLockToUserMap(page, editor);
+            return successfulLockStatus;
+        }
     }
 
     public void unlockPage(Page page, SessionUser editor) {
-        PageStatus pageStatus;
+        LockDetails existingLock;
 
         if (Objects.isNull(page)) {
             System.err.println("   Try to unlock page = NULL");
             return;
         }
-        System.out.println("   unlock page = " + page.getId());
-
-        pageStatus = getPageStatus(page);
-        if (pageStatus == null) {
-            System.err.println("   Failed to unlock page with status = NULL");
+        if (Objects.isNull(editor)) {
+            System.err.println("   Try to unlock page = " + page.getId() + " with editor = NULL");
             return;
         }
+        System.out.println("   unlock page = " + page.getId());
 
-        SessionUser pageLockedByUser = pageStatus.getEditor();
-        if (pageLockedByUser == null) {
-            System.err.println("   Failed to unlock page; user is NULL!");
+        existingLock = pageLockHashMap.get(page);
+        if (existingLock == null) {
+            System.err.println("   Failed to unlock page. Page not found");
+        } else {
+            SessionUser lockOwner = existingLock.getLockOwner();
+            if (lockOwner == null) {
+                System.err.println("   Failed to unlock page; user is NULL!");
+            } else if (lockOwner.equals(editor)) {
+                pageLockHashMap.remove(page);
+                removePageLockFromUserMap(page, editor);
+            } else {
+                System.err.println("   Failed to unlock page; page is locked by another user : " + lockOwner.getName(false));
+            }
         }
-        else if (pageLockedByUser.equals(editor)) {
-            pageStatusHashMap.remove(page);
+    }
+
+    private void addPageLockToUserMap(Page page, SessionUser lockOwner) {
+
+        HashSet<Page> userLocks;
+
+        if (userLockHashMap.containsKey(lockOwner)) {
+            userLocks = userLockHashMap.get(lockOwner);
+        } else {
+            userLocks = new HashSet<>();
+            userLockHashMap.put(lockOwner, userLocks);
+        }
+        if (!userLocks.add(page)) {
+            System.err.println("addPageLockToUserMap: page " + page.getId() + " is already in the map!");
         }
     }
 
-    public PageStatus getPageStatus(Page page) {
-        return pageStatusHashMap.getOrDefault(page, new PageStatus(false, null));
-    }
+    private void removePageLockFromUserMap(Page page, SessionUser lockOwner) {
 
-    public static final class PageStatus {
-        private final boolean locked;
-        private final SessionUser editor;
-        private final Date lockSince;
+        if (userLockHashMap.containsKey(lockOwner)) {
+            HashSet<Page> userLocks = userLockHashMap.get(lockOwner);
 
-        public PageStatus(boolean locked, SessionUser editor) {
-            this.locked = locked;
-            this.editor = editor;
-            this.lockSince = new Date();
-        }
-
-        public boolean isLocked() {
-            return locked;
-        }
-
-        public SessionUser getEditor() {
-            return editor;
-        }
-
-        public Date getLockSince() {
-            return lockSince;
+            if (!userLocks.remove(page)) {
+                System.err.println("removePageLockFromUserMap: page " + page.getId() + " is not in the map!");
+            }
+        } else {
+            System.err.println("removePageLockFromUserMap: user " + lockOwner.getName(false) + " is not in the map!");
         }
     }
+
+    private void releaseLocksFor(SessionUser user) {
+
+        if (Objects.isNull(user)) {
+            System.err.println("releaseLocks: user is NULL");
+            return;
+        }
+        System.out.println("releaseLocksFor: user " + user.getName(false));
+
+        if (userLockHashMap.containsKey(user)) {
+            HashSet<Page> userLocks = userLockHashMap.get(user);
+            for (Page page : userLocks) {
+                System.out.println("   release lock : " + page.getId());
+                pageLockHashMap.remove(page);
+            }
+            userLocks.clear();
+        }
+    }
+
 }

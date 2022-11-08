@@ -13,11 +13,7 @@ import org.teamapps.icons.Icon;
 import org.teamapps.ux.application.perspective.Perspective;
 import org.teamapps.ux.component.template.BaseTemplate;
 import org.teamapps.ux.model.ListTreeModel;
-import org.teamapps.ux.session.CurrentSessionContext;
-import org.teamapps.wiki.app.PageTreeUtils;
-import org.teamapps.wiki.app.WikiApplicationBuilder;
-import org.teamapps.wiki.app.WikiPageManager;
-import org.teamapps.wiki.app.WikiUtils;
+import org.teamapps.wiki.app.*;
 import org.teamapps.wiki.model.wiki.Book;
 import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
@@ -58,6 +54,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         PerspectiveSessionData perspectiveSessionData = (PerspectiveSessionData) getApplicationInstanceData();
         pageManager = WikiApplicationBuilder.PAGE_MANAGER;
         user = perspectiveSessionData.getUser();
+        pageManager.addReleaseUserLockListener(user);
         createUi();
     }
 
@@ -264,7 +261,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         }
         System.out.println("   onEditPageContentClicked : id/title [" + currentEditPage.getId() + " / " + currentEditPage.getTitle() + "]");
 
-        editPage(currentEditPage);
+        if (setPageLock(currentEditPage)) {
+            setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.CONTENT);
+            updateContentView(currentEditPage);
+        }
     }
 
     private void onEditPageSettingsClicked() {
@@ -279,9 +279,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             System.out.println("onEditPageSettingsClicked : " + currentEditPage.getId());
         }
 
-        pageManager.lockPage(currentEditPage, user);
-        showPageSettingsWindow(currentEditPage, false);
+        if (setPageLock(currentEditPage)) {
+            showPageSettingsWindow(currentEditPage, false);
+        }
     }
+
 
     private Void onPageSettingsSaved(Page modifiedPage) {
 
@@ -318,22 +320,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         // ToDo erste Seite auswählen, und ContenView aktualisieren
         selectedPage.set(null);
         updatePageTree();
-    }
-
-    private void editPage(Page page) {
-
-        WikiPageManager.PageStatus pageStatus = pageManager.lockPage(page, user);
-        if (pageStatus.getEditor().equals(user)) {
-
-            setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.CONTENT);
-
-            updateContentView(page);
-        } else {
-            CurrentSessionContext.get().showNotification(
-                    EmojiIcon.NO_ENTRY,
-                    "Page locked",
-                    "by " + pageStatus.getEditor().getName(false) + " since " + pageStatus.getLockSince().toString());
-        }
     }
 
     private void showPageSettingsWindow(Page page, boolean isNewPage) {
@@ -381,6 +367,25 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 System.out.println("     - / - (NULL)");
             }
         }
+    }
+
+    private boolean setPageLock(Page pageToLock) {
+
+        LockSuccessStatus lockSuccessStatus = pageManager.lockPage(pageToLock, user);
+
+        boolean isSuccessful = lockSuccessStatus.hasReceivedLock();
+        if (! isSuccessful) {
+            switch (lockSuccessStatus.getLockFailReason()) {
+                case LOCKED_BY_OTHER_USER -> {
+                    SessionUser user = lockSuccessStatus.getLockOwner();
+                    WikiUtils.showWarning("Page is already locked by user " + ((user == null) ? "UNKNOWN" : user.getName(false)));
+                }
+
+                case INVALID_INPUT -> WikiUtils.showWarning("Cannot lock page! Invalid parameters!");
+            }
+        }
+
+        return isSuccessful;
     }
 
 
