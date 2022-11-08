@@ -179,9 +179,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         currentEditPage = createNewPage(selectedChapter.get());
         isCurrentEditPageNew = true;
-        // ToDo Page Lock ist bei neuen Seiten überflüssig
+
         selectedPage.set(currentEditPage);
-        pageManager.lockPage(currentEditPage, user);
 
         showPageSettingsWindow(currentEditPage, isCurrentEditPageNew);
     }
@@ -240,11 +239,13 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
 
         page.clearChanges();
-        pageManager.unlockPage(page, user);
+
         if (isCurrentEditPageNew) {
             System.out.println("   DELETE page [" + page.getId() + "]");
             page.delete();
             updatePageTree();
+        } else {
+            pageManager.unlockPage(page, user);
         }
         currentEditPage = null;
         isCurrentEditPageNew = false;
@@ -288,7 +289,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private Void onPageSettingsSaved(Page modifiedPage) {
 
 //        System.out.println("   onPageSettingSaved");
-        pageManager.unlockPage(currentEditPage, user);
+        boolean isExistingPage = !isCurrentEditPageNew;
+        if (isExistingPage) {
+            pageManager.unlockPage(currentEditPage, user);
+        }
         currentEditPage = null;
         isCurrentEditPageNew = false;
 
