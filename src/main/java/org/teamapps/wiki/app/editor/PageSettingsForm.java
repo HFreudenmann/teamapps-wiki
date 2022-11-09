@@ -8,7 +8,6 @@ import org.teamapps.common.format.Color;
 import org.teamapps.data.extract.PropertyProvider;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
-import org.teamapps.ux.component.absolutelayout.Length;
 import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
 import org.teamapps.ux.component.field.MultiLineTextField;
@@ -71,9 +70,9 @@ public class PageSettingsForm {
         pageDescriptionField = new MultiLineTextField();
         pageDescriptionField.setMaxCharacters(999);
         pageDescriptionField.setShowClearButton(true);
-        // ToDo Bugfix: MultiLineTextField.setMinHeight increases the label height but not the TextField height !!
-        pageDescriptionField.setMinHeight(new Length(80));
-        pageDescriptionField.setMaxHeight(new Length(400));
+//      WORKAROUND: setMaxHeight seems to have no effect
+//                  --> auto adjust the height
+        pageDescriptionField.setAdjustHeightToContent(true);
 
         emojiIconComboBox = new ComboBox<>();
         emojiIconComboBox.setModel(getEmojiIconComboBoxModel());
