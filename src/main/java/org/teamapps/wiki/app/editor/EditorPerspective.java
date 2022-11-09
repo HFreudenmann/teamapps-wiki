@@ -117,7 +117,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 bookNavigationView.setSelectedChapter(chapter);
 
                 pageModel.setRecords(selectedChapter.get().getPages());
-                selectedPage.set(PageTreeUtils.getReOrderedPages(chapter).stream().findFirst().orElse(null));
+                selectedPage.set(getFirstPageOfChapter(chapter));
             } else {
                 System.out.println("selectedChapter.onChanged : (none)");
                 bookNavigationView.setSelectedChapter(null);
@@ -306,8 +306,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         isCurrentEditPageNew = false;
 
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-        // ToDo erste Seite auswählen, und ContentView aktualisieren
-        selectedPage.set(null);
+        selectedPage.set(getFirstPageOfChapter(selectedChapter.get()));
         updatePageTree();
     }
 
@@ -394,6 +393,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 .setTitle("New Page").setDescription("")
                 .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
+    }
+
+    private Page getFirstPageOfChapter(Chapter chapter) {
+        if (Objects.isNull(chapter)) {
+            return null;
+        } else {
+            return PageTreeUtils.getReOrderedPages(chapter).stream().findFirst().orElse(null);
+        }
     }
 
 }
