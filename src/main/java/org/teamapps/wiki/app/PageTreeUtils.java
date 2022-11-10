@@ -63,6 +63,18 @@ public class PageTreeUtils {
         }
     }
 
+    public static void deleteCascading(Page pageToDelete) {
+
+        if (pageToDelete == null) { return; }
+
+        List<Page> childPages = pageToDelete.getChildren();
+        System.out.println("deleteCascading : " + pageToDelete.getId() + "   children : " + childPages.size());
+        for (Page childPage : childPages) {
+            deleteCascading(childPage);
+        }
+        pageToDelete.delete();
+    }
+
     public static void reorderPage(Page page, boolean up) {
 
         if (page == null) {

@@ -296,12 +296,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         abortPageEdit(currentEditPage);
     }
 
-    private void onPageSettingsPageDeleted() {
+    private void onPageSettingsPageDeleted(Boolean isCascadingDeleteEnabled) {
 
         System.out.println("   onPageSettingsPageDeleted");
+        if (isCascadingDeleteEnabled) {
+            PageTreeUtils.deleteCascading(currentEditPage);
+        } else {
+            currentEditPage.delete();
+        }
         pageManager.unlockPage(currentEditPage, user);
-        // ToDo: Cascading delete; currently children are lifted up one level
-        currentEditPage.delete();
         currentEditPage = null;
         isCurrentEditPageNew = false;
 
