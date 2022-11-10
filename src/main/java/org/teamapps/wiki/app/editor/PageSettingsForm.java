@@ -8,9 +8,9 @@ import org.teamapps.common.format.Color;
 import org.teamapps.data.extract.PropertyProvider;
 import org.teamapps.icon.emoji.EmojiIcon;
 import org.teamapps.icons.Icon;
-import org.teamapps.ux.component.absolutelayout.Length;
 import org.teamapps.ux.component.dialogue.Dialogue;
 import org.teamapps.ux.component.field.Button;
+import org.teamapps.ux.component.field.CheckBox;
 import org.teamapps.ux.component.field.MultiLineTextField;
 import org.teamapps.ux.component.field.TextField;
 import org.teamapps.ux.component.field.combobox.ComboBox;
@@ -29,6 +29,7 @@ import org.teamapps.wiki.model.wiki.Page;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,8 @@ public class PageSettingsForm {
     @SuppressWarnings("rawtypes")
     Button<BaseTemplateRecord> deleteButton;
 
+    CheckBox deleteCascadingCheckBox;
+
     private Page page;
 
 
@@ -52,7 +55,7 @@ public class PageSettingsForm {
                        ListTreeModel<Page> pageListModel,
                        Function<Page, Void> onPageSettingsSave,
                        Runnable onPageSettingsCancel,
-                       Runnable onPageSettingsPageDelete) {
+                       Consumer<Boolean> onPageSettingsPageDelete) {
 
         formWindow = new FormWindow(EmojiIcon.GEAR, "Page Settings", applicationInstanceData);
 
@@ -71,9 +74,9 @@ public class PageSettingsForm {
         pageDescriptionField = new MultiLineTextField();
         pageDescriptionField.setMaxCharacters(999);
         pageDescriptionField.setShowClearButton(true);
-        // ToDo Bugfix: MultiLineTextField.setMinHeight increases the label height but not the TextField height !!
-        pageDescriptionField.setMinHeight(new Length(80));
-        pageDescriptionField.setMaxHeight(new Length(400));
+//      WORKAROUND: setMaxHeight seems to have no effect
+//                  --> auto adjust the height
+        pageDescriptionField.setAdjustHeightToContent(true);
 
         emojiIconComboBox = new ComboBox<>();
         emojiIconComboBox.setModel(getEmojiIconComboBoxModel());
@@ -98,7 +101,10 @@ public class PageSettingsForm {
         formWindow.addField("Parent Page", pageComboBox);
 
         deleteSection = formWindow.getFormLayout().addSection(EmojiIcon.WARNING, "Delete page").setCollapsed(true);
+        deleteCascadingCheckBox = new CheckBox();
+        deleteCascadingCheckBox.setCaption("Delete child nodes too");
         deleteButton = Button.create(EmojiIcon.WASTEBASKET, "DELETE PAGE PERMANENTLY").setColor(Color.MATERIAL_ORANGE_600);
+        formWindow.addField("", deleteCascadingCheckBox);
         formWindow.addField("", deleteButton);
 //      Alternative: left adjusted position of the button without (empty) label
 //        formWindow.getFormLayout().addLabelComponent(deleteButton);
@@ -128,6 +134,9 @@ public class PageSettingsForm {
 //      deleteSection.setVisible(isDeleteButtonAvailable);
         deleteSection.setHideWhenNoVisibleFields(true);
         deleteButton.setVisible(isDeleteButtonAvailable);
+        deleteCascadingCheckBox.setVisible(isDeleteButtonAvailable);
+
+        deleteCascadingCheckBox.setValue(false);
 
         pageListModel.setTreeNodeInfoFunction(WikiUtils.getPageTreeNodeInfoFunction());
 
@@ -143,18 +152,21 @@ public class PageSettingsForm {
 
 
     @NotNull
-    private Runnable onDeletePageClicked(Runnable onPageSettingsPageDelete) {
+    private Runnable onDeletePageClicked(Consumer<Boolean> onPageSettingsPageDelete) {
         return () -> {
             System.out.println("PSF.onDeletePageClicked");
+            boolean isDeleteCascadingEnabled = deleteCascadingCheckBox.getValue();
 
             Dialogue okCancel = Dialogue.createOkCancel(
                     EmojiIcon.WARNING,
                     "Delete confirmation",
-                    "Page: '" + page.getTitle() +  "'<br>Do you really want to DELETE this page PERMANENTLY?");
+                    "Page: '" + page.getTitle() +  "'<br>" +
+                         "Do you really want to DELETE this page" +
+                              (isDeleteCascadingEnabled ? " and all its child pages" : "") + " PERMANENTLY?");
             okCancel.show();
             okCancel.onResult.addListener(isConfirmed -> {
                 if (isConfirmed) {
-                    onPageSettingsPageDelete.run();
+                    onPageSettingsPageDelete.accept(isDeleteCascadingEnabled);
                     formWindow.close();
                 }
             });

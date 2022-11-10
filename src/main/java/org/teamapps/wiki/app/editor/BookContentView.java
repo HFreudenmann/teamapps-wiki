@@ -131,6 +131,10 @@ public class BookContentView {
         contentBlockField = new DisplayField();
         contentBlockField.setShowHtml(true);
         contentVerticalLayout.addComponent(contentBlockField);
+
+        contentEditor.setVisible(false);
+        contentDisplay.setVisible(false);
+        contentBlockField.setVisible(false);
     }
 
     private void createBookContentView(Perspective perspective,

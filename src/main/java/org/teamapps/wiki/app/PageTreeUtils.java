@@ -4,10 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PageTreeUtils {
@@ -60,6 +57,58 @@ public class PageTreeUtils {
         for (Page node : nodes) {
             pageNodes.add(node);
             addPageNodes(node.getChildren(), pageNodes);
+        }
+    }
+
+    public static void delete(Page pageToDelete, boolean isCascadingDelete) {
+
+        if (pageToDelete == null) { return; }
+
+        List<Page> childPages = pageToDelete.getChildren();
+        System.out.println("   delete : " + pageToDelete.getId() + "   children # : " + childPages.size());
+        for (Page childPage : childPages) {
+            if (isCascadingDelete) {
+                delete(childPage, isCascadingDelete);
+            } else {
+                childPage.setParent(pageToDelete.getParent());
+                childPage.save();
+            }
+        }
+        pageToDelete.delete();
+    }
+
+    public static void movePageLevelUp(Page pageToMove) {
+
+        if (pageToMove == null) { return; }
+
+        System.out.println("   movePageLevelUp : id [" + pageToMove.getId() + "]");
+        Page parent = pageToMove.getParent();
+        if (parent == null) {
+            WikiUtils.showWarning("Page is on topmost level. Cannot move page!");
+        } else {
+            Page newParent = parent.getParent();
+            pageToMove.setParent(newParent);
+            pageToMove.save();
+        }
+    }
+
+    public static void movePageLevelDown(Page pageToMove) {
+
+        if (pageToMove == null) { return; }
+
+        System.out.println("   movePageLevelDown : id [" + pageToMove.getId() + "]");
+        List<Page> childPages = pageToMove.getChildren();
+        if (childPages.size() == 0) {
+            WikiUtils.showWarning("Page is on lowest level. Cannot move page!");
+        } else {
+            Page newParentOfPageToMove = childPages.stream().findFirst().get();
+            Page newParentOfChildren = pageToMove.getParent();
+            for (Page childPage : childPages) {
+                childPage.setParent(newParentOfChildren);
+                childPage.save();
+            }
+            pageToMove.setParent(newParentOfPageToMove);
+            pageToMove.save();
         }
     }
 

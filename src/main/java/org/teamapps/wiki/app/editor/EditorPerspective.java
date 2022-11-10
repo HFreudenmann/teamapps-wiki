@@ -45,8 +45,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         super(applicationInstanceData, perspectiveInfoBadgeValue);
         PerspectiveSessionData perspectiveSessionData = (PerspectiveSessionData) getApplicationInstanceData();
-        pageManager = WikiApplicationBuilder.PAGE_MANAGER;
         user = perspectiveSessionData.getUser();
+        pageManager = WikiApplicationBuilder.PAGE_MANAGER;
         pageManager.addReleaseUserLockListener(user);
         createUi();
     }
@@ -60,7 +60,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         bookNavigationView.create(perspective,
                 bookModel, chapterModel, pageModel,
                 selectedBook::set, selectedChapter::set, selectedPage::set,
-                this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked);
+                this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked,
+                this::onMovePageLeftButtonClicked, this::onMovePageRightButtonClicked);
         bookContentView = new BookContentView();
         bookContentView.create(perspective,
                 this::onPageContentSaved, this::onPageContentCanceled, this::onEditPageContentClicked,
@@ -81,13 +82,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         selectedBook.set(Book.getAll().stream().findFirst().orElse(null));
         selectedChapter.set(selectedBook.get().getChapters().stream().findFirst().orElse(null));
         selectedPage.set(selectedChapter.get().getPages().stream().findFirst().orElse(null));
-
-        // ToDo Ursache finden und beseitigen
-        if (selectedPage.get() == null) {
-            // If the initial loaded book or chapter has no pages, then the content view seems to be in edit mode (wrong background colour).
-            // Displaying an empty page changes to the correct background color.
-            updateContentView(emptyPage);
-        }
     }
 
 
@@ -124,7 +118,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 bookNavigationView.setSelectedChapter(chapter);
 
                 pageModel.setRecords(selectedChapter.get().getPages());
-                selectedPage.set(PageTreeUtils.getReOrderedPages(chapter).stream().findFirst().orElse(null));
+                selectedPage.set(getFirstPageOfChapter(chapter));
             } else {
                 System.out.println("selectedChapter.onChanged : (none)");
                 bookNavigationView.setSelectedChapter(null);
@@ -188,6 +182,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onMovePageDownButtonClicked");
         PageTreeUtils.reorderPage(selectedPage.get(), false);
+        updatePageTree();
+    }
+
+    private void onMovePageLeftButtonClicked() {
+
+        System.out.println("onMovePageLeftButtonClicked");
+        PageTreeUtils.movePageLevelUp(selectedPage.get());
+        updatePageTree();
+    }
+    private void onMovePageRightButtonClicked() {
+
+        System.out.println("onMovePageRightButtonClicked");
+        PageTreeUtils.movePageLevelDown(selectedPage.get());
         updatePageTree();
     }
 
@@ -303,18 +310,17 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         abortPageEdit(currentEditPage);
     }
 
-    private void onPageSettingsPageDeleted() {
+    private void onPageSettingsPageDeleted(Boolean isCascadingDeleteEnabled) {
 
         System.out.println("   onPageSettingsPageDeleted");
+        PageTreeUtils.delete(currentEditPage, isCascadingDeleteEnabled);
+
         pageManager.unlockPage(currentEditPage, user);
-        // ToDo: Cascading delete; currently children are lifted up one level
-        currentEditPage.delete();
         currentEditPage = null;
         isCurrentEditPageNew = false;
 
         setContentViewEditMode(BookContentView.PAGE_EDIT_MODE.OFF);
-        // ToDo erste Seite auswählen, und ContentView aktualisieren
-        selectedPage.set(null);
+        selectedPage.set(getFirstPageOfChapter(selectedChapter.get()));
         updatePageTree();
     }
 
@@ -401,6 +407,14 @@ public class EditorPerspective extends AbstractApplicationPerspective {
                 .setTitle("New Page").setDescription("")
                 .setContent("<h2>Title</h2><p>Text</p>")
                 .save();
+    }
+
+    private Page getFirstPageOfChapter(Chapter chapter) {
+        if (Objects.isNull(chapter)) {
+            return null;
+        } else {
+            return PageTreeUtils.getReOrderedPages(chapter).stream().findFirst().orElse(null);
+        }
     }
 
 }

@@ -66,12 +66,14 @@ public class BookNavigationView {
                        Consumer<Page> onSelectedPageChangedListener,
                        Runnable onNewPageClickedListener,
                        Runnable onMovePageUpClicked,
-                       Runnable onMovePageDownClicked) {
+                       Runnable onMovePageDownClicked,
+                       Runnable onMovePageLeftClicked,
+                       Runnable onMovePageRightClicked) {
         createNavigationLayout(bookModel, chapterModel, pageModel,
                                onSelectedBookChangedListener, onSelectedChapterChangedListener, onSelectedPageChangedListener);
         createNavigationView(perspective,
-                             onNewPageClickedListener, onMovePageUpClicked, onMovePageDownClicked);
-
+                             onNewPageClickedListener, onMovePageUpClicked, onMovePageDownClicked,
+                             onMovePageLeftClicked, onMovePageRightClicked);
         return view;
     }
 
@@ -132,7 +134,9 @@ public class BookNavigationView {
     private void createNavigationView(Perspective perspective,
                                       Runnable onNewPageClickedListener,
                                       Runnable onMovePageUpClicked,
-                                      Runnable onMovePageDownClicked) {
+                                      Runnable onMovePageDownClicked,
+                                      Runnable onMovePageLeftClicked,
+                                      Runnable onMovePageRightClicked) {
 
         ToolbarButtonGroup buttonGroup;
 
@@ -151,8 +155,12 @@ public class BookNavigationView {
         buttonGroup = view.addLocalButtonGroup(new ToolbarButtonGroup());
         ToolbarButton upButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.UP_ARROW, ""));
         ToolbarButton downButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.DOWN_ARROW, ""));
+        ToolbarButton leftButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.LEFT_ARROW, ""));
+        ToolbarButton rightButton = buttonGroup.addButton(ToolbarButton.createTiny(EmojiIcon.RIGHT_ARROW, ""));
         upButton.onClick.addListener(onMovePageUpClicked);
         downButton.onClick.addListener(onMovePageDownClicked);
+        leftButton.onClick.addListener(onMovePageLeftClicked);
+        rightButton.onClick.addListener(onMovePageRightClicked);
     }
 
     @NotNull
