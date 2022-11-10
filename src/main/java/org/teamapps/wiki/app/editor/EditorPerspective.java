@@ -60,7 +60,8 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         bookNavigationView.create(perspective,
                 bookModel, chapterModel, pageModel,
                 selectedBook::set, selectedChapter::set, selectedPage::set,
-                this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked);
+                this::onNewPageButtonClicked, this::onMovePageUpButtonClicked, this::onMovePageDownButtonClicked,
+                this::onMovePageLeftButtonClicked, this::onMovePageRightButtonClicked);
         bookContentView = new BookContentView();
         bookContentView.create(perspective,
                 this::onPageContentSaved, this::onPageContentCanceled, this::onEditPageContentClicked,
@@ -181,6 +182,19 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("onMovePageDownButtonClicked");
         PageTreeUtils.reorderPage(selectedPage.get(), false);
+        updatePageTree();
+    }
+
+    private void onMovePageLeftButtonClicked() {
+
+        System.out.println("onMovePageLeftButtonClicked");
+        PageTreeUtils.movePageLevelUp(selectedPage.get());
+        updatePageTree();
+    }
+    private void onMovePageRightButtonClicked() {
+
+        System.out.println("onMovePageRightButtonClicked");
+        PageTreeUtils.movePageLevelDown(selectedPage.get());
         updatePageTree();
     }
 

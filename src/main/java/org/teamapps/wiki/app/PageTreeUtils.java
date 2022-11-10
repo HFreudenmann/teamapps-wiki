@@ -4,10 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PageTreeUtils {
@@ -78,6 +75,41 @@ public class PageTreeUtils {
             }
         }
         pageToDelete.delete();
+    }
+
+    public static void movePageLevelUp(Page pageToMove) {
+
+        if (pageToMove == null) { return; }
+
+        System.out.println("   movePageLevelUp : id [" + pageToMove.getId() + "]");
+        Page parent = pageToMove.getParent();
+        if (parent == null) {
+            WikiUtils.showWarning("Page is on topmost level. Cannot move page!");
+        } else {
+            Page newParent = parent.getParent();
+            pageToMove.setParent(newParent);
+            pageToMove.save();
+        }
+    }
+
+    public static void movePageLevelDown(Page pageToMove) {
+
+        if (pageToMove == null) { return; }
+
+        System.out.println("   movePageLevelDown : id [" + pageToMove.getId() + "]");
+        List<Page> childPages = pageToMove.getChildren();
+        if (childPages.size() == 0) {
+            WikiUtils.showWarning("Page is on lowest level. Cannot move page!");
+        } else {
+            Page newParentOfPageToMove = childPages.stream().findFirst().get();
+            Page newParentOfChildren = pageToMove.getParent();
+            for (Page childPage : childPages) {
+                childPage.setParent(newParentOfChildren);
+                childPage.save();
+            }
+            pageToMove.setParent(newParentOfPageToMove);
+            pageToMove.save();
+        }
     }
 
     public static void reorderPage(Page page, boolean up) {
