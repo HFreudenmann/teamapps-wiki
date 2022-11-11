@@ -141,6 +141,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             if (Objects.nonNull(page)) {
                 System.out.println("selectedPage.onChanged : id/title [" + page.getId() + " / " + page.getTitle() + "]");
                 updateContentView(page);
+                logPageList(pageModel);
             } else {
                 System.out.println("selectedPage.onChanged : (none)");
                 updateContentView(emptyPage);
@@ -362,9 +363,11 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
     private void logPageList(ListTreeModel<Page> pageTreeModel) {
         System.out.println("   Page list : id/title");
+        int hierarchyLevel;
         for (Page currentPage : pageTreeModel.getRecords()) {
             if (currentPage != null) {
-                System.out.println("     " + currentPage.getId() + " / " + currentPage.getTitle());
+                hierarchyLevel = PageTreeUtils.getPageLevel(currentPage);
+                System.out.println("     " + "   ".repeat(hierarchyLevel) +  currentPage.getId() + " / " + currentPage.getTitle());
             } else {
                 System.out.println("     - / - (NULL)");
             }
