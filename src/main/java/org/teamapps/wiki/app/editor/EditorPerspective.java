@@ -329,7 +329,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
 
         System.out.println("   showPageSettingsWindow : id/title [" + page.getId() + " / " + page.getTitle() + "]");
 
-        ListTreeModel<Page> pageListModel = new ListTreeModel<>(PageTreeUtils.getReOrderedPages(selectedChapter.get()));
+        ListTreeModel<Page> pageListModel = new ListTreeModel<>(PageTreeUtils.getSortedPagesOfChapter(selectedChapter.get()));
         pageSettingsForm.show(page, pageListModel, isNewPage);
     }
 
@@ -352,7 +352,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void updatePageTree() {
 
         System.out.println("   updatePageTree()");
-        pageModel.setRecords(PageTreeUtils.getReOrderedPages(selectedChapter.get()));
+        pageModel.setRecords(PageTreeUtils.getSortedPagesOfChapter(selectedChapter.get()));
         logPageList(pageModel);
         bookNavigationView.setSelectedPage(selectedPage.get());
     }
@@ -416,7 +416,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
         if (Objects.isNull(chapter)) {
             return null;
         } else {
-            return PageTreeUtils.getReOrderedPages(chapter).stream().findFirst().orElse(null);
+            return PageTreeUtils.getSortedPagesOfChapter(chapter).stream().findFirst().orElse(null);
         }
     }
 

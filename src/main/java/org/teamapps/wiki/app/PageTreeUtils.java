@@ -4,7 +4,10 @@ import org.jetbrains.annotations.NotNull;
 import org.teamapps.wiki.model.wiki.Chapter;
 import org.teamapps.wiki.model.wiki.Page;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class PageTreeUtils {
@@ -42,21 +45,21 @@ public class PageTreeUtils {
     }
 
     // List with correct order of children
-    public static List<Page> getReOrderedPages(Chapter chapter) {
+    public static List<Page> getSortedPagesOfChapter(Chapter chapter) {
 
         List<Page> pageList = new ArrayList<>();
         if (Objects.nonNull(chapter)) {
             List<Page> topLevelPages = getTopLevelPages(chapter);
-            addPageNodes(topLevelPages, pageList);
+            addSubPagesToList(topLevelPages, pageList);
         }
         return pageList;
     }
 
-    private static void addPageNodes(List<Page> nodes, List<Page> pageNodes) {
+    private static void addSubPagesToList(List<Page> nodes, List<Page> pageList) {
 
         for (Page node : nodes) {
-            pageNodes.add(node);
-            addPageNodes(node.getChildren(), pageNodes);
+            pageList.add(node);
+            addSubPagesToList(node.getChildren(), pageList);
         }
     }
 
@@ -119,49 +122,43 @@ public class PageTreeUtils {
             WikiUtils.showWarning("Page is null. Cannot reorder!");
             return;
         }
-
+        
         System.out.println("   reorderPage : id/title = " + page.getId() + "/" + page.getTitle());
-        if (page.getParent() == null) {
+        Page parent = page.getParent();
+        if (parent == null) {
             System.out.println("   reorderPage : page.Parent == null");
-            ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(page.getChapter()));
-
-            int pos = 0;
-            for (Page node : pageList) {
-                if (node.equals(page)) {
-                    break;
-                }
-                pos++;
-            }
-            System.out.println("   up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
-            if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
-                WikiUtils.showWarning("Cannot move page beyond the limits!");
-                return;
-            }
-            int newPos = up ? pos - 1 : pos + 1;
-            Collections.swap(pageList, pos, newPos);
+            List<Page> pageList = getTopLevelPages(page.getChapter());
+            movePage(page, up, pageList);
             page.getChapter().setPages(pageList).save();
         } else {
-            Page parent = page.getParent();
-
             System.out.println("   reorderPage : page.Parent id/title = " + parent.getId() + "/" + parent.getTitle());
 
-            ArrayList<Page> pageList = new ArrayList<>(parent.getChildren());
-            int pos = 0;
-            for (Page node : pageList) {
-                if (node.equals(page)) {
-                    break;
-                }
-                pos++;
-            }
-            System.out.println("   up=" + up + ", pos=" + pos + ", pageList.size()=" + pageList.size());
-            if ((up && pos == 0) || (!up && pos + 1 == pageList.size())) {
-                WikiUtils.showWarning("Cannot move page beyond the limits!");
-                return;
-            }
-            int newPos = up ? pos - 1 : pos + 1;
-            Collections.swap(pageList, pos, newPos);
+            List<Page> pageList = parent.getChildren();
+            movePage(page, up, pageList);
             parent.setChildren(pageList).save();
         }
     }
 
+    private static void movePage(Page pageToMove, boolean backwards, List<Page> pageList) {
+
+        if (pageToMove == null || pageList == null) { return; }
+
+        final int lowerBound = 0;
+        final int upperBound = pageList.size() - 1;
+        int position = 0;
+        for (Page page : pageList) {
+            if (page.equals(pageToMove)) {
+                break;
+            }
+            position++;
+        }
+        System.out.println("   movePage : " + (backwards ? "backwards" : "ahead") + ", position=" + position + ", pageList.size()=" + pageList.size());
+        if ((backwards && position == lowerBound) || (!backwards && position == upperBound)) {
+            WikiUtils.showWarning("Cannot move page beyond the limits!");
+            return;
+        }
+        int newPosition = backwards ? position - 1 : position + 1;
+        Collections.swap(pageList, position, newPosition);
+    }
+    
 }
