@@ -34,14 +34,86 @@ public class BaseData {
                 .setBook(demoBook)
                 .setTitle("Github").setDescription("Web site of the project on Github")
                 .save();
-        Page.create()
+        Page p1 = Page.create()
                 .setChapter(chapter1)
-                .setTitle("").setDescription("")
+                .setTitle("P1").setDescription("...")
                 .setContent("<p>...<br>" +
                         "Link to the web site:<br>" +
                         "   <a href=\"https://github.com/teamapps-org\">https://github.com/teamapps-org</a><br>" +
                         "     (click Ctrl + Enter to open the link in a new tab in Firefox)</p>"
                 )
+                .save();
+        Page p11 = Page.create()
+                .setChapter(chapter1)
+                .setParent(p1)
+                .setTitle("P1-1").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page p111 = Page.create()
+                .setChapter(chapter1)
+                .setParent(p11)
+                .setTitle("P1-1-1").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p11)
+                .setTitle("P1-1-2").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p11)
+                .setTitle("P1-1-3").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p11)
+                .setTitle("P1-1-4").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page p1111 = Page.create()
+                .setChapter(chapter1)
+                .setParent(p111)
+                .setTitle("P1-1-1-1").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p111)
+                .setTitle("P1-1-1-2").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p111)
+                .setTitle("P1-1-1-3").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p1111)
+                .setTitle("P1-1-1-1-1").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page p12 = Page.create()
+                .setChapter(chapter1)
+                .setParent(p1)
+                .setTitle("P1-2").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page p121 = Page.create()
+                .setChapter(chapter1)
+                .setParent(p12)
+                .setTitle("P1-2-1").setDescription("...")
+                .setContent("todo")
+                .save();
+        Page.create()
+                .setChapter(chapter1)
+                .setParent(p121)
+                .setTitle("P1-2-1-1").setDescription("...")
+                .setContent("todo")
                 .save();
     }
 
