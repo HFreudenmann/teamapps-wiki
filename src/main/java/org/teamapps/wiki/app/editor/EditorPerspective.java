@@ -230,7 +230,7 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     private void abortPageEdit(Page page) {
 
         if (Objects.isNull(page)) {
-            System.err.println("   abortPageEdit : page is NULL; Ingnore abort!");
+            System.err.println("   abortPageEdit : page is NULL; Ignore abort!");
             return;
         }
 
@@ -369,10 +369,10 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             if (currentPage != null) {
                 chapter = currentPage.getChapter();
                 hierarchyLevel = PageTreeUtils.getPageLevel(currentPage);
-                System.out.println("    " + ((chapter == null) ? "-" : chapter.getId()) + " "
-                                          + "   ".repeat(hierarchyLevel) +  currentPage.getId() + " / " + currentPage.getTitle());
+                System.out.println("      " + ((chapter == null) ? "-" : chapter.getId()) + "   "
+                                          + "   ".repeat(hierarchyLevel) +  currentPage.getId() + " / '" + currentPage.getTitle() + "'");
             } else {
-                System.out.println("     - / - (NULL)");
+                System.out.println("      -   - / '(null)'");
             }
         }
     }
