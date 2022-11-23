@@ -140,7 +140,6 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             if (page != null) {
                 System.out.println("selectedPage.onChanged : id/title [" + page.getId() + " / " + page.getTitle() + "]");
                 updateContentView(page);
-                logPageList(pageModel);
             } else {
                 System.out.println("selectedPage.onChanged : (none)");
                 updateContentView(emptyPage);

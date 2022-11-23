@@ -114,20 +114,20 @@ public class PageTreeUtils {
         } else {
             Page newParentOfPageToMove = childPages.stream().findFirst().get();
             Page newParentOfChildren = pageToMove.getParent();
-            if (newParentOfChildren == null) {
-                if (currentChapter == null) {
-                    System.err.println("   movePageLevelDown : chapter is null!");
-                } else {
-                    ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(currentChapter));
-                    logList("      Before (Top level pages) : ", pageList);
-                    logList("              add child pages  : ", new ArrayList<>(childPages));
-                    System.out.println("              remove page      : " + pageToMove.getId());
-                    pageList.addAll(childPages);
-                    pageList.remove(pageToMove);
-                    logList("      After  (Top level + child pages) : ", pageList);
-                    currentChapter.setPages(pageList).save();
-                }
-            }
+//            if (newParentOfChildren == null) {
+//                if (currentChapter == null) {
+//                    System.err.println("   movePageLevelDown : chapter is null!");
+//                } else {
+//                    ArrayList<Page> pageList = new ArrayList<>(getTopLevelPages(currentChapter));
+//                    logList("      Before (Top level pages) : ", pageList);
+//                    logList("              add child pages  : ", new ArrayList<>(childPages));
+//                    System.out.println("              remove page      : " + pageToMove.getId());
+//                    pageList.addAll(childPages);
+//                    pageList.remove(pageToMove);
+//                    logList("      After  (Top level + child pages) : ", pageList);
+//                    currentChapter.setPages(pageList).save();
+//                }
+//            }
             for (Page childPage : childPages) {
                 childPage.setParent(newParentOfChildren);
                 childPage.save();
@@ -154,18 +154,27 @@ public class PageTreeUtils {
         }
         
         System.out.println("   reorderPage : id/title = " + page.getId() + "/" + page.getTitle());
+        ArrayList<Page> pageList;
         Page parent = page.getParent();
         if (parent == null) {
             System.out.println("               : page.Parent == null");
 
-            List<Page> pageList = getTopLevelPages(page.getChapter());
-            movePage(page, up, pageList);
+            ArrayList<Page> topLevelPages = new ArrayList<>(getTopLevelPages(page.getChapter()));
+            logList("      Before (Top level pages) : ", topLevelPages);
+            movePage(page, up, topLevelPages);
+            logList("      After  (Top level pages) : ", topLevelPages);
+
+            pageList = new ArrayList<>();
+            addSubPagesToList(topLevelPages, pageList);
+
             page.getChapter().setPages(pageList).save();
         } else {
             System.out.println("               : page.Parent = " + parent.getId() + "/'" + parent.getTitle() + "'");
 
-            List<Page> pageList = parent.getChildren();
+            pageList = new ArrayList<>(parent.getChildren());
+            logList("      Before (children) : ", pageList);
             movePage(page, up, pageList);
+            logList("      After  (children) : ", pageList);
             parent.setChildren(pageList).save();
         }
     }
