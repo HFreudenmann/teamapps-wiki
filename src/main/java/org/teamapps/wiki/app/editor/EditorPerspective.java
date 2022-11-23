@@ -362,12 +362,15 @@ public class EditorPerspective extends AbstractApplicationPerspective {
     }
 
     private void logPageList(ListTreeModel<Page> pageTreeModel) {
-        System.out.println("   Page list : id/title");
+        System.out.println("   Page list : [chapter id / page id / page title]");
         int hierarchyLevel;
+        Chapter chapter;
         for (Page currentPage : pageTreeModel.getRecords()) {
             if (currentPage != null) {
+                chapter = currentPage.getChapter();
                 hierarchyLevel = PageTreeUtils.getPageLevel(currentPage);
-                System.out.println("     " + "   ".repeat(hierarchyLevel) +  currentPage.getId() + " / " + currentPage.getTitle());
+                System.out.println("    " + ((chapter == null) ? "-" : chapter.getId()) + " "
+                                          + "   ".repeat(hierarchyLevel) +  currentPage.getId() + " / " + currentPage.getTitle());
             } else {
                 System.out.println("     - / - (NULL)");
             }
@@ -403,6 +406,9 @@ public class EditorPerspective extends AbstractApplicationPerspective {
             newPage.setParent(null);
         } else {
             newPage.setParent(selectedPage.get());
+        }
+        if (Objects.isNull(chapter)) {
+            System.out.println("createNewPage : chapter is null!");
         }
 
         return newPage

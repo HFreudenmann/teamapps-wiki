@@ -51,6 +51,8 @@ public class PageTreeUtils {
         if (Objects.nonNull(chapter)) {
             List<Page> topLevelPages = getTopLevelPages(chapter);
             addSubPagesToList(topLevelPages, pageList);
+        } else {
+            System.out.println("getSortedPagesOfChapter: chapter is null");
         }
         return pageList;
     }
