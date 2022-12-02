@@ -1,10 +1,8 @@
 package org.teamapps.wiki;
 
-import org.teamapps.application.server.system.bootstrap.BootstrapSessionHandler;
 import org.teamapps.application.server.ApplicationServer;
-import org.teamapps.application.server.system.server.SessionRegistryHandler;
-import org.teamapps.application.server.system.session.UserSessionData;
-import org.teamapps.ux.session.SessionContext;
+import org.teamapps.application.server.system.bootstrap.BootstrapSessionHandler;
+import org.teamapps.model.controlcenter.User;
 import org.teamapps.wiki.app.WikiApplicationBuilder;
 import org.teamapps.wiki.model.wiki.Book;
 import org.teamapps.wiki.model.wiki.Page;
@@ -16,26 +14,22 @@ public class Server {
         File basePath = new File("./data");
         ApplicationServer applicationServer = new ApplicationServer(basePath);
 
-        BootstrapSessionHandler bootstrapSessionHandler = new BootstrapSessionHandler(new SessionRegistryHandler() {
-			@Override
-			public void handleNewSession(SessionContext context) {
-				// context.getIconProvider().setDefaultStyleForIconClass(StandardIcon.class, StandardIconStyles.VIVID_STANDARD_SHADOW_1);
-			}
-
-			@Override
-			public void handleAuthenticatedUser(UserSessionData userSessionData, SessionContext sessionContext) {
-
-			}
-		});
+        BootstrapSessionHandler bootstrapSessionHandler = new BootstrapSessionHandler() {
+            @Override
+            public void createInitialUser() {
+                AccountData.createDemoData();
+            }
+        };
 		applicationServer.setSessionHandler(bootstrapSessionHandler);
 		applicationServer.start();
 
         bootstrapSessionHandler.getSystemRegistry().installAndLoadApplication(new WikiApplicationBuilder());
 
         // Generate Demo data
-        AccountData.createDemoData();
         BaseData.createDemoData();
 
+        System.out.println("User accounts:   ");
+        User.getAll().forEach(user -> System.out.println("   Name: " + user.getFirstName() + " " + user.getLastName() + ",  Login: " + user.getLogin()));
         System.out.println("Wiki Content:   Books : " + Book.getCount() + ", Pages : " + Page.getCount());
     }
 }
