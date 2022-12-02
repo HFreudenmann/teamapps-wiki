@@ -116,6 +116,8 @@ public class BookNavigationView {
         pageTree.setPropertyProvider(getPagePropertyProvider());
         pageTree.onNodeSelected.addListener(onSelectedPageChangedListener);
         pageTree.setShowExpanders(true);
+        // ToDo implement pageTree.onIsExpandedHandler (or similar), as soon as the interface is extended
+        //      in order get the isExpanded-Status of the node and manage open and closed (page) nodes
 
         Panel treePanel = new Panel();
         treePanel.setContent(pageTree);
